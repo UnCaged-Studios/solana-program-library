@@ -17,17 +17,20 @@ pub mod kaching_cash_register {
     use super::*;
 
     pub fn create_cashbox(ctx: Context<CreateCashBox>, ix_args: CreateCashBoxArgs) -> Result<()> {
+        if !create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
+            return Err(ErrorCode::CashboxIdInvalid.into())
+        }
+        
         ctx.accounts.cashbox.bump = *ctx.bumps.get("cashbox").unwrap();
         ctx.accounts.cashbox.cashier = *ctx.accounts.cashier.to_account_info().key;
+
         let mut all_order_signers = Vec::from(ix_args.order_signers_whitelist);
         all_order_signers.push(ctx.accounts.cashbox.cashier);
         ctx.accounts.cashbox.order_signers_whitelist = all_order_signers;
         if ctx.accounts.cashbox.order_signers_whitelist.len() > ORDER_SIGNERS_WHITELIST_LIMIT {
             return Err(ErrorCode::CashboxOrderSignersWhilelistOverflow.into())
         }
-        if !create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
-            return Err(ErrorCode::CashboxIdInvalid.into())
-        }
+
         Ok(())
     }
 
@@ -36,7 +39,6 @@ pub mod kaching_cash_register {
         if !ctx.accounts.cashbox.order_signers_whitelist.contains(&order_signer_pubkey) {
             return Err(ErrorCode::UnknownOrderSigner.into())
         }
-        // TODO - verify _order_signer_pubkey exists in 
         let _order_items = settle_order_payment_utils::deserialize_order_items(&order)?;
         // TODO - execute order items
         Ok(())
