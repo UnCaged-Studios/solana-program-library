@@ -7,10 +7,9 @@ pub mod utils {
     }
   }
 
-  // only lowercase alphanumeric characters and _ are allowed
   fn is_valid_char(c: &u8) -> bool {
     match c {
-      // see ascii table
+      // allowed ascii characters: 0-9 | _ | a-z
       48..=57 | 95 | 97..=122 => true,
       _ => false
     }

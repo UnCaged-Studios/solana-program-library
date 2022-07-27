@@ -35,7 +35,7 @@ impl CashRegisterCashbox {
     pub const LEN: usize =
         1 // cashbox_bump,
         + 32 // cashier public key
-        + (32 * ORDER_SIGNERS_WHITELIST_LIMIT) // array of public key
+        + (32 * ORDER_SIGNERS_WHITELIST_LIMIT) // array of public keys
         ;
 }
 
