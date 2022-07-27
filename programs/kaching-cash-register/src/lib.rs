@@ -1,7 +1,7 @@
 mod create_cashbox;
 
 use anchor_lang::prelude::*;
-// use crate::create_cashbox::utils;
+use crate::create_cashbox::utils;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -13,12 +13,11 @@ pub mod kaching_cash_register {
     use super::*;
 
     pub fn create_cashbox(ctx: Context<CreateCashBox>, ix_args: CreateCashBoxArgs) -> Result<()> {
-        // ctx.accounts.cashbox.bump = *ctx.bumps.get("cashbox").unwrap();
-        // ctx.accounts.cashbox.cashier = *ctx.accounts.cashier.to_account_info().key
-        // if !utils::is_cashbox_id_valid(&data.cashbox_id) {
-        //     return Err(ErrorCode::CashboxIdInvalid.into())
-        // }
-        // msg!("{}", ix_args.cashbox_id);
+        ctx.accounts.cashbox.bump = *ctx.bumps.get("cashbox").unwrap();
+        ctx.accounts.cashbox.cashier = *ctx.accounts.cashier.to_account_info().key;
+        if !utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
+            return Err(ErrorCode::CashboxIdInvalid.into())
+        }
         Ok(())
     }
 }
@@ -53,7 +52,7 @@ pub struct CreateCashBox<'info> {
         init,
         payer = cashier,
         space = 8 + CashRegisterCashbox::LEN,
-        seeds = [CASHBOX_PDA_SEED.as_ref(), cashier.key().as_ref()], 
+        seeds = [CASHBOX_PDA_SEED.as_ref(), ix_args.cashbox_id.as_bytes().as_ref()], 
         bump
     )]
     pub cashbox: Account<'info, CashRegisterCashbox>,

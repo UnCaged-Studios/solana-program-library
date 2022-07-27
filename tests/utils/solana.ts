@@ -13,3 +13,5 @@ export const fundWallet = async (wallet: PublicKey) => {
   );
   await localnetConnection.confirmTransaction(airdropSignature);
 };
+
+export const getConnection = () => localnetConnection;
