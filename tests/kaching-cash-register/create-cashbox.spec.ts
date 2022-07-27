@@ -100,7 +100,7 @@ describe("create_cashbox instruction", () => {
       );
     });
 
-    it("should dailt to create a cashbox if order_signers_whitelist is bigger than 5", async () => {
+    it("should failt to create a cashbox if order_signers_whitelist is bigger than 5", async () => {
       const cashboxId = generateRandomCashboxId();
       const orderSignersWhitelist = new Array(5)
         .fill(0)

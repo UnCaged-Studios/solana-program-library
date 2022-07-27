@@ -1,5 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
+import { expect, assert } from "chai";
 import {
   createCashbox,
   findCashboxPDA,
@@ -16,6 +17,7 @@ describe("settle_order_payment instruction", () => {
   anchor.setProvider(anchor.AnchorProvider.env());
 
   const cashier = Keypair.generate();
+  const knownOrderSigner = Keypair.generate();
 
   let cashbox: PublicKey;
   let cashboxId: string;
@@ -27,7 +29,10 @@ describe("settle_order_payment instruction", () => {
     const [_cashbox, _cashboxBump] = await findCashboxPDA(cashboxId);
     cashbox = _cashbox;
     cashboxBump = _cashboxBump;
-    await createCashbox({ cashboxId }, cashier);
+    await createCashbox(
+      { cashboxId, orderSignersWhitelist: [knownOrderSigner.publicKey] },
+      cashier
+    );
   });
 
   it("should settle a payment", async () => {
@@ -46,5 +51,45 @@ describe("settle_order_payment instruction", () => {
       signature,
       signerPublicKey: cashier.publicKey,
     });
+  });
+
+  it("should settle a payment if order signer is not cashier, but in whitelist", async () => {
+    const { serializedOrder, signature } = mockCashierOrderService(
+      [{ op: "crd", amount: 42, currency: Keypair.generate().publicKey }],
+      knownOrderSigner
+    );
+    await settleOrderPayment({
+      cashbox,
+      cashboxId,
+      cashboxBump,
+      serializedOrder,
+      signature,
+      signerPublicKey: knownOrderSigner.publicKey,
+    });
+  });
+
+  it("should fail to settle a payment if order signer is unknown", async () => {
+    const evilCashier = Keypair.generate();
+
+    const { serializedOrder, signature } = mockCashierOrderService(
+      [{ op: "crd", amount: 42, currency: Keypair.generate().publicKey }],
+      evilCashier
+    );
+    try {
+      await settleOrderPayment({
+        cashbox,
+        cashboxId,
+        cashboxBump,
+        serializedOrder,
+        signature,
+        signerPublicKey: evilCashier.publicKey,
+      });
+    } catch (error) {
+      expect(error.logs).to.contain(
+        "Program log: AnchorError occurred. Error Code: UnknownOrderSigner. Error Number: 6002. Error Message: order was not signed by a known order signers."
+      );
+      return;
+    }
+    assert.fail("expected tx to throw error, but it succeeded");
   });
 });

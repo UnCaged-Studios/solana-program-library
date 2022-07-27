@@ -21,10 +21,10 @@ pub mod kaching_cash_register {
         ctx.accounts.cashbox.cashier = *ctx.accounts.cashier.to_account_info().key;
         let mut all_order_signers = Vec::from(ix_args.order_signers_whitelist);
         all_order_signers.push(ctx.accounts.cashbox.cashier);
-        if all_order_signers.len() > ORDER_SIGNERS_WHITELIST_LIMIT {
+        ctx.accounts.cashbox.order_signers_whitelist = all_order_signers;
+        if ctx.accounts.cashbox.order_signers_whitelist.len() > ORDER_SIGNERS_WHITELIST_LIMIT {
             return Err(ErrorCode::CashboxOrderSignersWhilelistOverflow.into())
         }
-        ctx.accounts.cashbox.order_signers_whitelist = all_order_signers;
         if !create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
             return Err(ErrorCode::CashboxIdInvalid.into())
         }
@@ -32,7 +32,10 @@ pub mod kaching_cash_register {
     }
 
     pub fn settle_order_payment(ctx: Context<SettleOrderPayment>, _ix_args: SettleOrderPaymentArgs) -> Result<()> {
-        let (_order_signer_pubkey, order) = settle_order_payment_utils::resolve(&ctx.accounts.instructions_sysvar)?;
+        let (order_signer_pubkey, order) = settle_order_payment_utils::resolve(&ctx.accounts.instructions_sysvar)?;
+        if !ctx.accounts.cashbox.order_signers_whitelist.contains(&order_signer_pubkey) {
+            return Err(ErrorCode::UnknownOrderSigner.into())
+        }
         // TODO - verify _order_signer_pubkey exists in 
         let _order_items = settle_order_payment_utils::deserialize_order_items(&order)?;
         // TODO - execute order items
@@ -106,4 +109,7 @@ pub enum ErrorCode {
 
     #[msg("cashbox can only have up to 5 order signers in whitelist")]
     CashboxOrderSignersWhilelistOverflow,
+
+    #[msg("order was not signed by a known order signers")]
+    UnknownOrderSigner,
 }
