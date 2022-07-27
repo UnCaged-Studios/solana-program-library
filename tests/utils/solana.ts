@@ -1,6 +1,6 @@
-import { PublicKey, LAMPORTS_PER_SOL, Connection } from '@solana/web3.js';
+import { PublicKey, LAMPORTS_PER_SOL, Connection } from "@solana/web3.js";
 
-const localnetConnection = new Connection('http://127.0.0.1:8899');
+const localnetConnection = new Connection("http://127.0.0.1:8899");
 
 export const fundWallet = async (wallet: PublicKey) => {
   let balance = await localnetConnection.getBalance(wallet);
