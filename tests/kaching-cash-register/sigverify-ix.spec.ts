@@ -174,10 +174,6 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
     );
   });
 
-  it("should fail settle-order ix because Ed25519Program has empty signatures", async () => {
-    return txShouldFail(() => settlePayment({ disableEd25519Ix: true }));
-  });
-
   it("TODO", () => {
     // https://github.com/solana-labs/solana/blob/9cf772092273c98fa35cd9a2f23d635f47eac6aa/web3.js/src/ed25519-program.ts#L57)
     // create an Ed25519Program instruction with multiple signatures and try to bypass verification
