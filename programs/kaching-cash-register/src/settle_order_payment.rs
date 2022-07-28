@@ -40,26 +40,28 @@ pub mod utils {
         return Ok((pub_key, order.to_vec()));
     }
 
-    impl OrderItem {
-        pub const LEN: usize = 41;
-    }
-
     #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Debug)]
     pub struct OrderItem {
         amount: u16,
         currency: Pubkey,
-        op: String, // "dbt" | "crd" TODO: make enum
+        op: u8,
     }
 
-    pub fn deserialize_order_items(order_payload: &Vec<u8>) -> Result<Vec<OrderItem>> {
-        let num_of_items: usize = order_payload[0].into();
-        let res = (0..num_of_items)
-            .map(|idx| {
-                let from = (idx * OrderItem::LEN) + 1;
-                let range = from..(from + OrderItem::LEN);
-                OrderItem::try_from_slice(&order_payload[range]).unwrap()
-            })
-            .collect();
-        Ok(res)
+    #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Debug)]
+    pub struct FullOrder {
+        pub id: u64,
+        pub expiry: u32,
+        pub customer: Pubkey,
+        pub not_before: u32,
+        pub created_at: u32,
+        pub cashbox_id: String,
+        pub items: Vec<OrderItem>,
+    }
+
+    pub fn deserialize_order(order_payload: &Vec<u8>) -> Result<FullOrder> {
+        match FullOrder::try_from_slice(order_payload) {
+            Ok(order) => Ok(order),
+            Err(_) => err!(ErrorCode::InstructionMissing)
+        }
     }
 }

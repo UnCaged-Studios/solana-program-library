@@ -2,7 +2,7 @@ pub mod utils {
 
     fn is_valid_cashobox_id_length(size: usize) -> bool {
         match size {
-            3..=50 => return true,
+            3..=25 => return true,
             _ => return false,
         }
     }

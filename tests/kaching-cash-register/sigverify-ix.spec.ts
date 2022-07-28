@@ -59,10 +59,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       cashboxBump: number;
     }): typeof settlePayment =>
     async (overrides) => {
-      const { serializedOrder, signature } = mockCashierOrderService(
-        [{ op: "crd", amount: 42, currency: Keypair.generate().publicKey }],
-        cashier
-      );
+      const { serializedOrder, signature } = mockCashierOrderService(cashier);
       const mutateEd25519Ix = overrides.mutateEd25519Ix || ((i: any) => i);
       const ixEd25519Program = mutateEd25519Ix(
         Ed25519Program.createInstructionWithPublicKey({

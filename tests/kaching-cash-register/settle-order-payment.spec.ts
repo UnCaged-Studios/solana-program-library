@@ -7,6 +7,7 @@ import {
   generateRandomCashboxId,
 } from "../utils/cashbox";
 import {
+  anOrder,
   mockCashierOrderService,
   settleOrderPayment,
 } from "../utils/settle-payment";
@@ -36,12 +37,28 @@ describe("settle_order_payment instruction", () => {
   });
 
   it("should settle a payment", async () => {
+    const { serializedOrder, signature } = mockCashierOrderService(cashier);
+    await settleOrderPayment({
+      cashbox,
+      cashboxId,
+      cashboxBump,
+      serializedOrder,
+      signature,
+      signerPublicKey: cashier.publicKey,
+    });
+  });
+
+  it("should settle a payment with maximum ix size", async () => {
     const { serializedOrder, signature } = mockCashierOrderService(
-      [
-        { op: "crd", amount: 42, currency: Keypair.generate().publicKey },
-        { op: "dbt", amount: 73, currency: Keypair.generate().publicKey },
-      ],
-      cashier
+      cashier,
+      anOrder({
+        cashboxId: new Array(25).fill("a").join(""),
+        items: new Array(20).fill(0).map(() => ({
+          op: 1,
+          amount: 42,
+          currency: Keypair.generate().publicKey,
+        })),
+      })
     );
     await settleOrderPayment({
       cashbox,
@@ -54,10 +71,8 @@ describe("settle_order_payment instruction", () => {
   });
 
   it("should settle a payment if order signer is not cashier, but in whitelist", async () => {
-    const { serializedOrder, signature } = mockCashierOrderService(
-      [{ op: "crd", amount: 42, currency: Keypair.generate().publicKey }],
-      knownOrderSigner
-    );
+    const { serializedOrder, signature } =
+      mockCashierOrderService(knownOrderSigner);
     await settleOrderPayment({
       cashbox,
       cashboxId,
@@ -71,10 +86,7 @@ describe("settle_order_payment instruction", () => {
   it("should fail to settle a payment if order signer is unknown", async () => {
     const evilCashier = Keypair.generate();
 
-    const { serializedOrder, signature } = mockCashierOrderService(
-      [{ op: "crd", amount: 42, currency: Keypair.generate().publicKey }],
-      evilCashier
-    );
+    const { serializedOrder, signature } = mockCashierOrderService(evilCashier);
     try {
       await settleOrderPayment({
         cashbox,

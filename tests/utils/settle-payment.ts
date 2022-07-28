@@ -6,7 +6,7 @@ import {
   PublicKey,
   SYSVAR_INSTRUCTIONS_PUBKEY,
 } from "@solana/web3.js";
-import { OrderItem, serializeOrder } from "../../sdk/ts";
+import { OrderItemOperation, OrderModel, serializeOrder } from "../../sdk/ts";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
 import nacl from "tweetnacl";
 
@@ -16,13 +16,32 @@ const program = anchor.workspace
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
 
+export const anOrder = (input: Partial<OrderModel>) => ({
+  id: input.id || 100000,
+  cashboxId: input.cashboxId || "abc",
+  expiry: input.expiry || Date.now() / 1000 + 1000,
+  customer: input.customer || Keypair.generate().publicKey,
+  notBefore: input.notBefore || Date.now() / 1000,
+  createdAt: input.createdAt || Date.now() / 1000,
+  items: input.items || [
+    {
+      op: OrderItemOperation.CREDIT,
+      amount: 42,
+      currency: Keypair.generate().publicKey,
+    },
+    {
+      op: OrderItemOperation.DEBIT,
+      amount: 73,
+      currency: Keypair.generate().publicKey,
+    },
+  ],
+});
+
 export const mockCashierOrderService = (
-  items: OrderItem[],
-  cashier: Keypair
+  cashier: Keypair,
+  order: OrderModel = anOrder({})
 ) => {
-  const serializedOrder = serializeOrder({
-    items,
-  });
+  const serializedOrder = serializeOrder(order);
   const signature = signOrderPayload(serializedOrder, cashier);
   return { serializedOrder, signature };
 };

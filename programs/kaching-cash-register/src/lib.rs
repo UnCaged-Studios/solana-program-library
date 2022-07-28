@@ -47,8 +47,8 @@ pub mod kaching_cash_register {
         {
             return Err(ErrorCode::UnknownOrderSigner.into());
         }
-        // FIXME - order message shoudl actully be the order value objetct, not the array
-        let _order_items = settle_order_payment_utils::deserialize_order_items(&order)?;
+        let full_order = settle_order_payment_utils::deserialize_order(&order)?;
+        msg!("{:?}", full_order);
         // TODO - execute order items
         Ok(())
     }

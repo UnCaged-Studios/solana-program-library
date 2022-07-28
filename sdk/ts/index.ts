@@ -1,60 +1,116 @@
 import { PublicKey } from "@solana/web3.js";
+import * as borsh from "borsh";
+
+const getItemsBuffAllocation = (items: Array<unknown>) => 4 + items.length * 35;
+
+class OrderItemEncoderContainer {
+  constructor(
+    public amount: number,
+    public currency: Uint8Array,
+    public op: number
+  ) {}
+}
+
+class OrderEncoderContainer {
+  constructor(
+    public id: number,
+    public expiry: number,
+    public customer: Uint8Array,
+    public not_before: number,
+    public created_at: number,
+    public cashbox_id: String,
+    public items: Uint8Array
+  ) {}
+}
+
+const serializeOrderItems = (items: OrderModel["items"]) => {
+  const result = new Uint8Array(getItemsBuffAllocation(items));
+
+  items
+    .reduce(
+      (acc, item) => {
+        const serialized = borsh.serialize(
+          new Map([
+            [
+              OrderItemEncoderContainer,
+              {
+                kind: "struct",
+                fields: [
+                  ["amount", "u16"], // 2 bytes
+                  ["currency", [32]], // 32 bytes
+                  ["op", "u8"], // 1 bytes
+                ],
+              },
+            ],
+          ]),
+          new OrderItemEncoderContainer(
+            item.amount,
+            item.currency.toBytes(),
+            item.op
+          )
+        );
+        acc.push(serialized);
+        return acc;
+      },
+      [Uint8Array.from([items.length, 0, 0, 0])]
+    )
+    .reduce((offset, item) => {
+      result.set(item, offset);
+      return offset + item.length;
+    }, 0);
+
+  return result;
+};
+
+export const serializeOrder = (order: OrderModel) =>
+  borsh.serialize(
+    new Map([
+      [
+        OrderEncoderContainer,
+        {
+          kind: "struct",
+          fields: [
+            ["id", "u64"], // 8 bytes
+            ["expiry", "u32"], // 4 bytes
+            ["customer", [32]], // 32 bytes
+            ["not_before", "u32"], // 4 bytes
+            ["created_at", "u32"], // 4 bytes
+            ["cashbox_id", "string"],
+            ["items", [getItemsBuffAllocation(order.items)]],
+          ],
+        },
+      ],
+    ]),
+    new OrderEncoderContainer(
+      order.id,
+      order.expiry,
+      order.customer.toBytes(),
+      order.notBefore,
+      order.createdAt,
+      order.cashboxId,
+      serializeOrderItems(order.items)
+    )
+  );
+
+export const enum OrderItemOperation {
+  CREDIT = 0,
+  DEBIT = 1,
+}
 
 // debit customer with 𝑛1 amount of mint X.
-export type OrderItem = {
-  amount: number; // u16
-  currency: PublicKey;
-  op: "dbt" | "crd";
+export type OrderItemModel = {
+  amount: number; // u16; // 2 bytes
+  currency: PublicKey; // 32 bytes (TODO - can be compressed to 1 byte, if represents index order_signers_whitelist)
+  op: OrderItemOperation; // u8; // 1 byte
+  // = 35 bytes
 };
 
-const BORSH_SERIALIZE_NUM_OF_BYTES = {
-  U16: () => 2, // https://docs.rs/borsh/0.2.4/src/borsh/ser/mod.rs.html#30
-  PUBKEY: () => 32, // https://docs.rs/solana-program/latest/src/solana_program/pubkey.rs.html#87
-  STRING: (strLength: number) => 4 + strLength, // https://docs.rs/borsh/0.2.4/src/borsh/ser/mod.rs.html#91-98
-  // TOTAL: 41 == 2 + 32 + 4 + 3
-};
-
-const toU16 = (num) => Uint8Array.from([num & 255, (num >> 8) & 255]);
-
-const ORDER_ITEM_OP_LEN_AS_U8 = 3;
-
-const orderItemLayout =
-  BORSH_SERIALIZE_NUM_OF_BYTES.U16() /* amount (u16) */ + // TODO - increase to support bigger numbers
-  BORSH_SERIALIZE_NUM_OF_BYTES.PUBKEY() /* currency (PublicKey) */ +
-  BORSH_SERIALIZE_NUM_OF_BYTES.STRING(ORDER_ITEM_OP_LEN_AS_U8); // crd | dbt
-
-const numOfItemsLaoyt = 1;
-
-const lengthOfOpString = Uint8Array.from([ORDER_ITEM_OP_LEN_AS_U8, 0, 0, 0]);
-
-export const serializeOrder = ({ items }: { items: Array<OrderItem> }) => {
-  if (items.length > 255) {
-    throw new Error(`can only supprt up to 255 items`);
-  }
-
-  const orderItemData = Buffer.alloc(
-    numOfItemsLaoyt + orderItemLayout * items.length
-  );
-  orderItemData.fill(items.length);
-
-  let offsets = 1;
-
-  return items.reduce((acc, item) => {
-    // 'amount'
-    acc.fill(toU16(item.amount), offsets);
-    offsets += BORSH_SERIALIZE_NUM_OF_BYTES.U16();
-
-    // 'pubkey'
-    acc.fill(item.currency.toBytes(), offsets);
-    offsets += BORSH_SERIALIZE_NUM_OF_BYTES.PUBKEY();
-
-    // length of 'op' string (=3)
-    acc.fill(lengthOfOpString, offsets);
-    offsets += lengthOfOpString.length;
-    // 'op' string
-    acc.fill(Buffer.from((item.op, "ascii")), offsets);
-    offsets += ORDER_ITEM_OP_LEN_AS_U8;
-
-    return acc;
-  }, orderItemData);
+export type OrderModel = {
+  id: number;
+  expiry: number;
+  customer: PublicKey;
+  notBefore: number;
+  createdAt: number;
+  cashboxId: string;
+  items: Array<OrderItemModel>;
 };
