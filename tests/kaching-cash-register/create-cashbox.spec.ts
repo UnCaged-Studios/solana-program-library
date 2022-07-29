@@ -7,6 +7,7 @@ import {
   generateRandomCashboxId,
 } from "../utils/cashbox";
 import { fundWallet, getConnection } from "../utils/solana";
+import { shouldFail } from "../utils/testing";
 
 describe("create_cashbox instruction", () => {
   // Configure the client to use the local cluster.
@@ -23,17 +24,13 @@ describe("create_cashbox instruction", () => {
 
   it("should fail to create a cashbox if already exists", async () => {
     const cashboxId = generateRandomCashboxId();
+    const [cashbox] = await findCashboxPDA(cashboxId);
     await createCashbox({ cashboxId }, cashier);
-    try {
-      await createCashbox({ cashboxId }, cashier);
-    } catch (error) {
-      const [cashbox] = await findCashboxPDA(cashboxId);
-      expect(error.logs).to.contain(
-        `Allocate: account Address { address: ${cashbox.toBase58()}, base: None } already in use`
-      );
-      return;
-    }
-    assert.fail("expected tx to throw error, but it succeeded");
+
+    return shouldFail(
+      () => createCashbox({ cashboxId }, cashier),
+      `Allocate: account Address { address: ${cashbox.toBase58()}, base: None } already in use`
+    );
   });
 
   describe("cashbox account data", () => {
@@ -105,37 +102,28 @@ describe("create_cashbox instruction", () => {
       const orderSignersWhitelist = new Array(5)
         .fill(0)
         .map(() => Keypair.generate().publicKey);
-      try {
-        await createCashbox(
-          {
-            cashboxId,
-            orderSignersWhitelist,
-          },
-          cashier,
-          { waitForTx: true }
-        );
-      } catch (error) {
-        expect(error.logs).to.contain(
-          "Program log: AnchorError occurred. Error Code: CashboxOrderSignersWhilelistOverflow. Error Number: 6001. Error Message: cashbox can only have up to 5 order signers in whitelist."
-        );
-        return;
-      }
-      assert.fail("expected tx to throw error, but it succeeded");
+      return shouldFail(
+        () =>
+          createCashbox(
+            {
+              cashboxId,
+              orderSignersWhitelist,
+            },
+            cashier,
+            { waitForTx: true }
+          ),
+        { code: "CashboxOrderSignersWhilelistOverflow", num: 6001 }
+      );
     });
   });
 
   describe("cashbox id validations", () => {
     it("should fail to create a cashbox if id is invalid with proper error message", async () => {
       const id = generateRandomCashboxId();
-      try {
-        await createCashbox({ cashboxId: `#${id}` }, cashier);
-      } catch (error) {
-        expect(error.logs).to.contain(
-          "Program log: AnchorError occurred. Error Code: CashboxIdInvalid. Error Number: 6000. Error Message: cashbox_id is invalid, should be only ascii characters, of length 3-50."
-        );
-        return;
-      }
-      assert.fail("expected tx to throw error, but it succeeded");
+      return shouldFail(() => createCashbox({ cashboxId: `#${id}` }, cashier), {
+        code: "CashboxIdInvalid",
+        num: 6000,
+      });
     });
 
     it("should fail to create a cashbox if id is invalid", async () => {

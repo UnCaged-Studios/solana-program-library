@@ -16,9 +16,11 @@ const program = anchor.workspace
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
 
-export const anOrder = (input: Partial<OrderModel>) => ({
+export const anOrder = (
+  input: Partial<OrderModel> & Pick<OrderModel, "cashboxId">
+) => ({
   id: input.id || 100000,
-  cashboxId: input.cashboxId || "abc",
+  cashboxId: input.cashboxId,
   expiry: input.expiry || Date.now() / 1000 + 1000,
   customer: input.customer || Keypair.generate().publicKey,
   notBefore: input.notBefore || Date.now() / 1000,
@@ -39,7 +41,7 @@ export const anOrder = (input: Partial<OrderModel>) => ({
 
 export const mockCashierOrderService = (
   cashier: Keypair,
-  order: OrderModel = anOrder({})
+  order: OrderModel
 ) => {
   const serializedOrder = serializeOrder(order);
   const signature = signOrderPayload(serializedOrder, cashier);

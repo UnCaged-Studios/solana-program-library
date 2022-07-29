@@ -17,7 +17,7 @@ pub mod kaching_cash_register {
 
     pub fn create_cashbox(ctx: Context<CreateCashBox>, ix_args: CreateCashBoxArgs) -> Result<()> {
         if !create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
-            return Err(ErrorCode::CashboxIdInvalid.into());
+            return err!(ErrorCode::CashboxIdInvalid);
         }
 
         ctx.accounts.cashbox.bump = *ctx.bumps.get("cashbox").unwrap();
@@ -26,7 +26,7 @@ pub mod kaching_cash_register {
         let mut all_order_signers = Vec::from(ix_args.order_signers_whitelist);
         all_order_signers.push(ctx.accounts.cashbox.cashier);
         if all_order_signers.len() > ORDER_SIGNERS_WHITELIST_LIMIT {
-            return Err(ErrorCode::CashboxOrderSignersWhilelistOverflow.into());
+            return err!(ErrorCode::CashboxOrderSignersWhilelistOverflow);
         }
         ctx.accounts.cashbox.order_signers_whitelist = all_order_signers;
 
@@ -35,7 +35,7 @@ pub mod kaching_cash_register {
 
     pub fn settle_order_payment(
         ctx: Context<SettleOrderPayment>,
-        _ix_args: SettleOrderPaymentArgs,
+        ix_args: SettleOrderPaymentArgs,
     ) -> Result<()> {
         let (order_signer_pubkey, order) =
             settle_order_payment_utils::resolve(&ctx.accounts.instructions_sysvar)?;
@@ -45,10 +45,17 @@ pub mod kaching_cash_register {
             .order_signers_whitelist
             .contains(&order_signer_pubkey)
         {
-            return Err(ErrorCode::UnknownOrderSigner.into());
+            return err!(ErrorCode::UnknownOrderSigner);
         }
-        let full_order = settle_order_payment_utils::deserialize_order(&order)?;
-        msg!("{:?}", full_order);
+        let signed_order = settle_order_payment_utils::deserialize_order(&order)?;
+        if signed_order.cashbox_id != ix_args.cashbox_id {
+            return err!(ErrorCode::OrderCashboxIdMismatch);
+        }
+        // TODO - validate
+        // pub expiry: u32,
+        // pub customer: Pubkey,
+        // pub not_before: u32,
+        
         // TODO - execute order items
         Ok(())
     }
@@ -123,4 +130,7 @@ pub enum ErrorCode {
 
     #[msg("order was not signed by a known order signers")]
     UnknownOrderSigner,
+
+    #[msg("cashbox_id in order does not match the cashbox provided in instruction")]
+    OrderCashboxIdMismatch,
 }

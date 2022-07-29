@@ -6,15 +6,15 @@ import {
   Keypair,
   PublicKey,
 } from "@solana/web3.js";
-import { assert, expect } from "chai";
 import { fundWallet } from "../utils/solana";
 import {
   generateRandomCashboxId,
   findCashboxPDA,
   createCashbox,
 } from "../utils/cashbox";
-import { mockCashierOrderService } from "../utils/settle-payment";
+import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
+import { shouldFail } from "../utils/testing";
 
 describe("settle_order_payment instruction with Ed25519 SigVerify pre-instruction", () => {
   // Configure the client to use the local cluster.
@@ -22,19 +22,6 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
 
   const program = anchor.workspace
     .KachingCashRegister as anchor.Program<KachingCashRegister>;
-
-  const txShouldFail = async (
-    sendTx: () => Promise<void | string>,
-    errSubstr: string = "Error Code: InstructionMissing"
-  ) => {
-    try {
-      await sendTx();
-    } catch (error) {
-      expect(error.message).to.contain(errSubstr);
-      return;
-    }
-    assert.fail("expected tx to throw error, but it succeeded");
-  };
 
   const cashier = Keypair.generate();
 
@@ -59,7 +46,12 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       cashboxBump: number;
     }): typeof settlePayment =>
     async (overrides) => {
-      const { serializedOrder, signature } = mockCashierOrderService(cashier);
+      const { serializedOrder, signature } = mockCashierOrderService(
+        cashier,
+        anOrder({
+          cashboxId: cashboxModel.cashboxId,
+        })
+      );
       const mutateEd25519Ix = overrides.mutateEd25519Ix || ((i: any) => i);
       const ixEd25519Program = mutateEd25519Ix(
         Ed25519Program.createInstructionWithPublicKey({
@@ -101,7 +93,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   });
 
   it("should fail settle-order ix because number of signatures in ixEd25519Program is zero", async () => {
-    return txShouldFail(
+    return shouldFail(
       () =>
         settlePayment({
           mutateEd25519Ix: (ix) => {
@@ -114,7 +106,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   });
 
   it("should fail settle-order ix because number of signatures in ixEd25519Program is more then supplied", async () => {
-    return txShouldFail(
+    return shouldFail(
       () =>
         settlePayment({
           mutateEd25519Ix: (ix) => {
@@ -127,7 +119,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   });
 
   it("should fail settle-order ix because number of signatures in ixEd25519Program is maxium possible", async () => {
-    return txShouldFail(
+    return shouldFail(
       () =>
         settlePayment({
           mutateEd25519Ix: (ix) => {
@@ -141,7 +133,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   });
 
   it("should fail settle-order ix because instructionIndex pass to ixEd25519Program is defined (null by default)", async () => {
-    return txShouldFail(
+    return shouldFail(
       () =>
         settlePayment({
           instructionIndex: 2,
@@ -151,7 +143,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   });
 
   it("should fail settle-order ix because public key did not sign the message", async () => {
-    return txShouldFail(
+    return shouldFail(
       () =>
         settlePayment({
           signerPublicKey: Keypair.generate().publicKey,
@@ -161,13 +153,16 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   });
 
   it("should fail settle-order ix because no prior Ed25519Program ix", async () => {
-    return txShouldFail(() => settlePayment({ disableEd25519Ix: true }));
+    return shouldFail(() => settlePayment({ disableEd25519Ix: true }), {
+      code: "InstructionMissing",
+      num: 100,
+    });
   });
 
   it("should fail settle-order ix because ix account is not sysvar::instructions", async () => {
-    return txShouldFail(
+    return shouldFail(
       () => settlePayment({ instructionsSysvar: SYSVAR_CLOCK_PUBKEY }),
-      "Error Number: 2012. Error Message: An address constraint was violated"
+      { code: "ConstraintAddress", num: 2012 }
     );
   });
 

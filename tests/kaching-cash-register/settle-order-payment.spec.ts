@@ -12,6 +12,7 @@ import {
   settleOrderPayment,
 } from "../utils/settle-payment";
 import { fundWallet } from "../utils/solana";
+import { shouldFail } from "../utils/testing";
 
 describe("settle_order_payment instruction", () => {
   // Configure the client to use the local cluster.
@@ -37,7 +38,12 @@ describe("settle_order_payment instruction", () => {
   });
 
   it("should settle a payment", async () => {
-    const { serializedOrder, signature } = mockCashierOrderService(cashier);
+    const { serializedOrder, signature } = mockCashierOrderService(
+      cashier,
+      anOrder({
+        cashboxId,
+      })
+    );
     await settleOrderPayment({
       cashbox,
       cashboxId,
@@ -52,7 +58,7 @@ describe("settle_order_payment instruction", () => {
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
-        cashboxId: new Array(25).fill("a").join(""),
+        cashboxId,
         items: new Array(20).fill(0).map(() => ({
           op: 1,
           amount: 42,
@@ -71,8 +77,12 @@ describe("settle_order_payment instruction", () => {
   });
 
   it("should settle a payment if order signer is not cashier, but in whitelist", async () => {
-    const { serializedOrder, signature } =
-      mockCashierOrderService(knownOrderSigner);
+    const { serializedOrder, signature } = mockCashierOrderService(
+      knownOrderSigner,
+      anOrder({
+        cashboxId,
+      })
+    );
     await settleOrderPayment({
       cashbox,
       cashboxId,
@@ -86,22 +96,23 @@ describe("settle_order_payment instruction", () => {
   it("should fail to settle a payment if order signer is unknown", async () => {
     const evilCashier = Keypair.generate();
 
-    const { serializedOrder, signature } = mockCashierOrderService(evilCashier);
-    try {
-      await settleOrderPayment({
-        cashbox,
+    const { serializedOrder, signature } = mockCashierOrderService(
+      evilCashier,
+      anOrder({
         cashboxId,
-        cashboxBump,
-        serializedOrder,
-        signature,
-        signerPublicKey: evilCashier.publicKey,
-      });
-    } catch (error) {
-      expect(error.logs).to.contain(
-        "Program log: AnchorError occurred. Error Code: UnknownOrderSigner. Error Number: 6002. Error Message: order was not signed by a known order signers."
-      );
-      return;
-    }
-    assert.fail("expected tx to throw error, but it succeeded");
+      })
+    );
+    return shouldFail(
+      () =>
+        settleOrderPayment({
+          cashbox,
+          cashboxId,
+          cashboxBump,
+          serializedOrder,
+          signature,
+          signerPublicKey: evilCashier.publicKey,
+        }),
+      { code: "UnknownOrderSigner", num: 6002 }
+    );
   });
 });
