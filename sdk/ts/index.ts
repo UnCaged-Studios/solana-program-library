@@ -99,10 +99,9 @@ export const enum OrderItemOperation {
 
 // debit customer with 𝑛1 amount of mint X.
 export type OrderItemModel = {
-  amount: number; // u16; // 2 bytes
-  currency: PublicKey; // 32 bytes (TODO - can be compressed to 1 byte, if represents index order_signers_whitelist)
-  op: OrderItemOperation; // u8; // 1 byte
-  // = 35 bytes
+  amount: number;
+  currency: PublicKey;
+  op: OrderItemOperation;
 };
 
 export type OrderModel = {

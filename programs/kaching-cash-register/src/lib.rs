@@ -1,10 +1,12 @@
 mod create_cashbox;
 mod settle_order_payment;
 
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::{instructions as instructions_sysvar_module, clock::Clock};
 use crate::create_cashbox::utils as create_cashbox_utils;
 use crate::settle_order_payment::utils as settle_order_payment_utils;
+use anchor_lang::prelude::*;
+use anchor_lang::solana_program::sysvar::{
+    clock::Clock, instructions as instructions_sysvar_module,
+};
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -40,11 +42,12 @@ pub mod kaching_cash_register {
         let (order_signer_pubkey, order) =
             settle_order_payment_utils::resolve(&ctx.accounts.instructions_sysvar)?;
 
-        if false == ctx
-            .accounts
-            .cashbox
-            .order_signers_whitelist
-            .contains(&order_signer_pubkey)
+        if false
+            == ctx
+                .accounts
+                .cashbox
+                .order_signers_whitelist
+                .contains(&order_signer_pubkey)
         {
             return err!(ErrorCode::UnknownOrderSigner);
         }
@@ -60,7 +63,7 @@ pub mod kaching_cash_register {
         if false == signed_order.customer.eq(ctx.accounts.customer.key) {
             return err!(ErrorCode::OrderCustomerMismatch);
         }
-        
+
         let now = Clock::get()?.unix_timestamp;
         if i64::try_from(signed_order.expiry).unwrap() < now {
             return err!(ErrorCode::OrderExpired);
@@ -68,7 +71,7 @@ pub mod kaching_cash_register {
         if i64::try_from(signed_order.not_before).unwrap() > now {
             return err!(ErrorCode::OrderNotValidYet);
         }
-        
+
         // TODO - execute order items
         Ok(())
     }
@@ -133,7 +136,6 @@ pub struct SettleOrderPayment<'info> {
     )]
     pub cashbox: Account<'info, CashRegisterCashbox>,
 
-    /// CHECK: This is not dangerous because we explicitly check the id
     #[account(address = instructions_sysvar_module::ID)]
     pub instructions_sysvar: AccountInfo<'info>,
 }

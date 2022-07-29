@@ -61,7 +61,7 @@ pub mod utils {
     pub fn deserialize_order(order_payload: &Vec<u8>) -> Result<FullOrder> {
         match FullOrder::try_from_slice(order_payload) {
             Ok(order) => Ok(order),
-            Err(_) => err!(ErrorCode::InstructionMissing)
+            Err(_) => err!(ErrorCode::InstructionMissing),
         }
     }
 }
