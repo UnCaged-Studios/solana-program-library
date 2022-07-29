@@ -46,10 +46,12 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       cashboxBump: number;
     }): typeof settlePayment =>
     async (overrides) => {
+      const customer = Keypair.generate();
       const { serializedOrder, signature } = mockCashierOrderService(
         cashier,
         anOrder({
           cashboxId: cashboxModel.cashboxId,
+          customer: customer.publicKey,
         })
       );
       const mutateEd25519Ix = overrides.mutateEd25519Ix || ((i: any) => i);
@@ -69,10 +71,12 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
         })
         .accounts({
           cashbox: cashboxModel.cashbox,
+          customer: customer.publicKey,
           instructionsSysvar:
             overrides.instructionsSysvar || SYSVAR_INSTRUCTIONS_PUBKEY,
         })
         .preInstructions(overrides.disableEd25519Ix ? [] : [ixEd25519Program])
+        .signers([customer])
         .rpc();
     };
 

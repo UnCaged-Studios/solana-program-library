@@ -36,9 +36,9 @@ const serializeOrderItems = (items: OrderModel["items"]) => {
               {
                 kind: "struct",
                 fields: [
-                  ["amount", "u16"], // 2 bytes
-                  ["currency", [32]], // 32 bytes
-                  ["op", "u8"], // 1 bytes
+                  ["amount", "u16"],
+                  ["currency", [32]],
+                  ["op", "u8"],
                 ],
               },
             ],
@@ -70,11 +70,11 @@ export const serializeOrder = (order: OrderModel) =>
         {
           kind: "struct",
           fields: [
-            ["id", "u64"], // 8 bytes
-            ["expiry", "u32"], // 4 bytes
-            ["customer", [32]], // 32 bytes
-            ["not_before", "u32"], // 4 bytes
-            ["created_at", "u32"], // 4 bytes
+            ["id", "u64"],
+            ["expiry", "u32"],
+            ["customer", [32]],
+            ["not_before", "u32"],
+            ["created_at", "u32"],
             ["cashbox_id", "string"],
             ["items", [getItemsBuffAllocation(order.items)]],
           ],

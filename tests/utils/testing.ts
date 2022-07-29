@@ -25,7 +25,7 @@ export const shouldFail = async (
     }
     console.error(error.message);
     console.error(error.logs);
-    assert.fail(`expected tx to throw error that includes '${expectedError}'`);
+    assert.fail(`expected tx to throw error that includes '${sbstr}'`);
   }
   assert.fail("expected tx to throw error, but it succeeded");
 };

@@ -1,10 +1,10 @@
 mod create_cashbox;
 mod settle_order_payment;
 
+use anchor_lang::prelude::*;
+use anchor_lang::solana_program::sysvar::{instructions as instructions_sysvar_module, clock::Clock};
 use crate::create_cashbox::utils as create_cashbox_utils;
 use crate::settle_order_payment::utils as settle_order_payment_utils;
-use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions as instructions_sysvar_module;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -39,7 +39,8 @@ pub mod kaching_cash_register {
     ) -> Result<()> {
         let (order_signer_pubkey, order) =
             settle_order_payment_utils::resolve(&ctx.accounts.instructions_sysvar)?;
-        if !ctx
+
+        if false == ctx
             .accounts
             .cashbox
             .order_signers_whitelist
@@ -47,14 +48,26 @@ pub mod kaching_cash_register {
         {
             return err!(ErrorCode::UnknownOrderSigner);
         }
+
         let signed_order = settle_order_payment_utils::deserialize_order(&order)?;
+
         if signed_order.cashbox_id != ix_args.cashbox_id {
             return err!(ErrorCode::OrderCashboxIdMismatch);
         }
-        // TODO - validate
-        // pub expiry: u32,
-        // pub customer: Pubkey,
-        // pub not_before: u32,
+        if false == signed_order.customer.eq(ctx.accounts.customer.key) {
+            return err!(ErrorCode::OrderCustomerMismatch);
+        }
+        if false == signed_order.customer.eq(ctx.accounts.customer.key) {
+            return err!(ErrorCode::OrderCustomerMismatch);
+        }
+        
+        let now = Clock::get()?.unix_timestamp;
+        if i64::try_from(signed_order.expiry).unwrap() < now {
+            return err!(ErrorCode::OrderExpired);
+        }
+        if i64::try_from(signed_order.not_before).unwrap() > now {
+            return err!(ErrorCode::OrderNotValidYet);
+        }
         
         // TODO - execute order items
         Ok(())
@@ -94,6 +107,7 @@ pub struct SettleOrderPaymentArgs {
 pub struct CreateCashBox<'info> {
     #[account(mut)]
     pub cashier: Signer<'info>,
+
     #[account(
         init,
         payer = cashier,
@@ -102,12 +116,16 @@ pub struct CreateCashBox<'info> {
         bump
     )]
     pub cashbox: Account<'info, CashRegisterCashbox>,
+
     pub system_program: Program<'info, System>,
 }
 
 #[derive(Accounts)]
 #[instruction(ix_args: SettleOrderPaymentArgs)]
 pub struct SettleOrderPayment<'info> {
+    #[account(mut)]
+    pub customer: Signer<'info>,
+
     #[account(
         mut,
         seeds = [CASHBOX_PDA_SEED.as_ref(), ix_args.cashbox_id.as_bytes().as_ref()],
@@ -133,4 +151,13 @@ pub enum ErrorCode {
 
     #[msg("cashbox_id in order does not match the cashbox provided in instruction")]
     OrderCashboxIdMismatch,
+
+    #[msg("tx signer does not match customer registered in order")]
+    OrderCustomerMismatch,
+
+    #[msg("order is expired")]
+    OrderExpired,
+
+    #[msg("order is not valid yet")]
+    OrderNotValidYet,
 }

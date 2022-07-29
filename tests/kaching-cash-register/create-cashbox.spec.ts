@@ -19,7 +19,7 @@ describe("create_cashbox instruction", () => {
 
   it("should create a cashbox", async () => {
     const cashboxId = generateRandomCashboxId();
-    await createCashbox({ cashboxId }, cashier);
+    return createCashbox({ cashboxId }, cashier);
   });
 
   it("should fail to create a cashbox if already exists", async () => {
