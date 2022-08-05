@@ -1,10 +1,10 @@
 mod create_cashbox;
-mod settle_order_payment;
 mod errors;
+mod settle_order_payment;
 
 use crate::create_cashbox::utils as create_cashbox_utils;
+use crate::errors::ErrorCode;
 use crate::settle_order_payment::utils as settle_order_payment_utils;
-use crate::errors::{ErrorCode};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::{
     clock::Clock, instructions as instructions_sysvar_module,
