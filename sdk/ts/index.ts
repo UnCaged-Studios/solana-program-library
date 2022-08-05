@@ -23,43 +23,34 @@ class OrderEncoderContainer {
   ) {}
 }
 
+const serializeOrderItem = (item: OrderItemModel) =>
+  borsh.serialize(
+    new Map([
+      [
+        OrderItemEncoderContainer,
+        {
+          kind: "struct",
+          fields: [
+            ["amount", "u16"],
+            ["currency", [32]],
+            ["op", "u8"],
+          ],
+        },
+      ],
+    ]),
+    new OrderItemEncoderContainer(item.amount, item.currency.toBytes(), item.op)
+  );
+
 const serializeOrderItems = (items: OrderModel["items"]) => {
-  const result = new Uint8Array(getItemsBuffAllocation(items));
-
-  items
-    .reduce(
-      (acc, item) => {
-        const serialized = borsh.serialize(
-          new Map([
-            [
-              OrderItemEncoderContainer,
-              {
-                kind: "struct",
-                fields: [
-                  ["amount", "u16"],
-                  ["currency", [32]],
-                  ["op", "u8"],
-                ],
-              },
-            ],
-          ]),
-          new OrderItemEncoderContainer(
-            item.amount,
-            item.currency.toBytes(),
-            item.op
-          )
-        );
-        acc.push(serialized);
-        return acc;
-      },
-      [Uint8Array.from([items.length, 0, 0, 0])]
-    )
-    .reduce((offset, item) => {
-      result.set(item, offset);
-      return offset + item.length;
-    }, 0);
-
-  return result;
+  const bufferLayout = new Uint8Array(getItemsBuffAllocation(items));
+  let offset = 0;
+  return [Uint8Array.from([items.length, 0, 0, 0])]
+    .concat(items.map(serializeOrderItem))
+    .reduce((layout, item) => {
+      layout.set(item, offset);
+      offset += item.length;
+      return layout;
+    }, bufferLayout);
 };
 
 export const serializeOrder = (order: OrderModel) =>

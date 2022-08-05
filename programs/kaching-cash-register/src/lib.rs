@@ -1,8 +1,10 @@
 mod create_cashbox;
 mod settle_order_payment;
+mod errors;
 
 use crate::create_cashbox::utils as create_cashbox_utils;
 use crate::settle_order_payment::utils as settle_order_payment_utils;
+use crate::errors::{ErrorCode};
 use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::{
     clock::Clock, instructions as instructions_sysvar_module,
@@ -136,30 +138,7 @@ pub struct SettleOrderPayment<'info> {
     )]
     pub cashbox: Account<'info, CashRegisterCashbox>,
 
+    /// CHECK: This is not dangerous because we explicitly check the id
     #[account(address = instructions_sysvar_module::ID)]
     pub instructions_sysvar: AccountInfo<'info>,
-}
-
-#[error_code]
-pub enum ErrorCode {
-    #[msg("cashbox_id is invalid, should be only ascii characters, of length 3-50")]
-    CashboxIdInvalid,
-
-    #[msg("cashbox can only have up to 5 order signers in whitelist")]
-    CashboxOrderSignersWhilelistOverflow,
-
-    #[msg("order was not signed by a known order signers")]
-    UnknownOrderSigner,
-
-    #[msg("cashbox_id in order does not match the cashbox provided in instruction")]
-    OrderCashboxIdMismatch,
-
-    #[msg("tx signer does not match customer registered in order")]
-    OrderCustomerMismatch,
-
-    #[msg("order is expired")]
-    OrderExpired,
-
-    #[msg("order is not valid yet")]
-    OrderNotValidYet,
 }
