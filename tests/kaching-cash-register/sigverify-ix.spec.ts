@@ -6,7 +6,7 @@ import {
   Keypair,
   PublicKey,
 } from "@solana/web3.js";
-import { fundWallet } from "../utils/solana";
+import { fundWalletWithSOL } from "../utils/solana";
 import {
   generateRandomCashboxId,
   findCashboxPDA,
@@ -81,7 +81,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
     };
 
   beforeEach(async () => {
-    await fundWallet(cashier.publicKey);
+    await fundWalletWithSOL(cashier.publicKey);
     const cashboxId = generateRandomCashboxId();
     const [cashbox, cashboxBump] = await findCashboxPDA(cashboxId);
     await createCashbox({ cashboxId }, cashier);

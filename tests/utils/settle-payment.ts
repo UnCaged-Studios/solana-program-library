@@ -1,17 +1,13 @@
-import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
-import {
-  Ed25519Program,
-  Keypair,
-  PublicKey,
-  SYSVAR_INSTRUCTIONS_PUBKEY,
-} from "@solana/web3.js";
+import { Keypair } from "@solana/web3.js";
 import nacl from "tweetnacl";
-import { OrderItemOperation, OrderModel, serializeOrder } from "../../sdk/ts";
-import { KachingCashRegister } from "../../target/types/kaching_cash_register";
-
-const program = anchor.workspace
-  .KachingCashRegister as Program<KachingCashRegister>;
+import {
+  OrderItemOperation,
+  OrderModel,
+  serializeOrder,
+  createSettlePaymentTransaction,
+  SettleOrderPaymentArgs,
+} from "../../sdk/ts";
+import { getConnection } from "./solana";
 
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
@@ -27,12 +23,12 @@ export const anOrder = (
   createdAt: input.createdAt || Date.now() / 1000,
   items: input.items || [
     {
-      op: OrderItemOperation.CREDIT,
+      op: OrderItemOperation.CREDIT_CUSTOMER,
       amount: 42,
       currency: Keypair.generate().publicKey,
     },
     {
-      op: OrderItemOperation.DEBIT,
+      op: OrderItemOperation.DEBIT_CUSTOMER,
       amount: 73,
       currency: Keypair.generate().publicKey,
     },
@@ -48,41 +44,8 @@ export const mockCashierOrderService = (
   return { serializedOrder, signature };
 };
 
-type SettleOrderPaymentArgs = {
-  cashbox: PublicKey;
-  cashboxId: string;
-  cashboxBump: number;
-  serializedOrder: Uint8Array;
-  signature: Uint8Array;
-  signerPublicKey: PublicKey;
-  customer: Keypair;
-};
-
-export const settleOrderPayment = async ({
-  cashbox,
-  cashboxId,
-  cashboxBump,
-  serializedOrder,
-  signature,
-  signerPublicKey,
-  customer,
-}: SettleOrderPaymentArgs) => {
-  const ixEd25519Program = Ed25519Program.createInstructionWithPublicKey({
-    publicKey: signerPublicKey.toBytes(),
-    signature,
-    message: serializedOrder,
-  });
-  await program.methods
-    .settleOrderPayment({
-      cashboxId,
-      cashboxBump,
-    })
-    .accounts({
-      cashbox,
-      instructionsSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
-      customer: customer.publicKey,
-    })
-    .preInstructions([ixEd25519Program])
-    .signers([customer])
-    .rpc();
+export const settleOrderPayment = async (args: SettleOrderPaymentArgs) => {
+  const tx = await createSettlePaymentTransaction(args);
+  tx.feePayer = args.customer.publicKey;
+  return getConnection().sendTransaction(tx, [args.customer]);
 };

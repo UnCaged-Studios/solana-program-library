@@ -9,6 +9,9 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::{
     clock::Clock, instructions as instructions_sysvar_module,
 };
+use anchor_spl::token::{self, Token};
+use solana_program::account_info::AccountInfo;
+use spl_associated_token_account::get_associated_token_address;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -20,7 +23,7 @@ pub mod kaching_cash_register {
     use super::*;
 
     pub fn create_cashbox(ctx: Context<CreateCashBox>, ix_args: CreateCashBoxArgs) -> Result<()> {
-        if !create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
+        if false == create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
             return err!(ErrorCode::CashboxIdInvalid);
         }
 
@@ -37,8 +40,8 @@ pub mod kaching_cash_register {
         Ok(())
     }
 
-    pub fn settle_order_payment(
-        ctx: Context<SettleOrderPayment>,
+    pub fn settle_order_payment<'info>(
+        ctx: Context<'_, '_, '_, 'info, SettleOrderPayment<'info>>,
         ix_args: SettleOrderPaymentArgs,
     ) -> Result<()> {
         let (order_signer_pubkey, order) =
@@ -62,9 +65,6 @@ pub mod kaching_cash_register {
         if false == signed_order.customer.eq(ctx.accounts.customer.key) {
             return err!(ErrorCode::OrderCustomerMismatch);
         }
-        if false == signed_order.customer.eq(ctx.accounts.customer.key) {
-            return err!(ErrorCode::OrderCustomerMismatch);
-        }
 
         let now = Clock::get()?.unix_timestamp;
         if i64::try_from(signed_order.expiry).unwrap() < now {
@@ -74,7 +74,45 @@ pub mod kaching_cash_register {
             return err!(ErrorCode::OrderNotValidYet);
         }
 
-        // TODO - execute order items
+        let mut order_items_atas = ctx.remaining_accounts.iter();
+
+        for item in signed_order.items.iter() {
+            let mut find_ata = |pubkey: &Pubkey| {
+                let ata_pubkey = get_associated_token_address(pubkey, &item.currency);
+                order_items_atas.find(|ac| ac.key.eq(&ata_pubkey))
+            };
+            let (from, to) = {
+                let customer_ata =
+                    find_ata(ctx.accounts.customer.key).ok_or(ErrorCode::OrderItemAtaMissing)?;
+                let cashier_ata = find_ata(&ctx.accounts.cashbox.cashier)
+                    .ok_or(ErrorCode::OrderItemAtaMissing)?;
+                match item.op {
+                    0 => Ok((cashier_ata, customer_ata)), // CREDIT_CUSTOMER
+                    1 => Ok((customer_ata, cashier_ata)), // DEBIT_CUSTOMER
+                    _ => err!(ErrorCode::OrderItemUnknownOperation),
+                }
+            }?;
+            let amount = u64::try_from(item.amount).unwrap();
+
+            msg!(
+                "transfer {} tokens {} from {:?} to {:?}",
+                amount,
+                item.currency,
+                from.to_account_info(),
+                to.to_account_info()
+            );
+            let cpi_ctx = CpiContext::new(
+                ctx.accounts.token_program.to_account_info(),
+                token::Transfer {
+                    from: from.to_account_info(),
+                    to: to.to_account_info(),
+                    authority: ctx.accounts.customer.to_account_info(),
+                },
+            );
+            token::transfer(cpi_ctx, amount)?;
+            // (&mut ctx.accounts.token_vault).reload()?;
+        }
+
         Ok(())
     }
 }
@@ -141,4 +179,5 @@ pub struct SettleOrderPayment<'info> {
     /// CHECK: This is not dangerous because we explicitly check the id
     #[account(address = instructions_sysvar_module::ID)]
     pub instructions_sysvar: AccountInfo<'info>,
+    pub token_program: Program<'info, Token>,
 }

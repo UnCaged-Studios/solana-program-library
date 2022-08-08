@@ -42,9 +42,9 @@ pub mod utils {
 
     #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Debug)]
     pub struct OrderItem {
-        amount: u16,
-        currency: Pubkey,
-        op: u8,
+        pub amount: u64,
+        pub currency: Pubkey,
+        pub op: u8,
     }
 
     #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Debug)]

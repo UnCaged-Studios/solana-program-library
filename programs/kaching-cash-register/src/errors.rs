@@ -22,4 +22,10 @@ pub enum ErrorCode {
 
     #[msg("order is not valid yet")]
     OrderNotValidYet,
+
+    #[msg("order item associated token account was not found in instruction accounts")]
+    OrderItemAtaMissing,
+
+    #[msg("order item operation is unknown (not 0 or 1)")]
+    OrderItemUnknownOperation,
 }

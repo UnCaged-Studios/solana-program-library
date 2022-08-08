@@ -11,7 +11,7 @@ import {
   mockCashierOrderService,
   settleOrderPayment,
 } from "../utils/settle-payment";
-import { fundWallet } from "../utils/solana";
+import { fundWalletWithSOL } from "../utils/solana";
 import { shouldFail } from "../utils/testing";
 
 describe("order validations", () => {
@@ -26,7 +26,7 @@ describe("order validations", () => {
   let cashboxBump: number;
 
   before(async () => {
-    await fundWallet(cashier.publicKey);
+    await fundWalletWithSOL(cashier.publicKey);
     cashboxId = generateRandomCashboxId();
     const [_cashbox, _cashboxBump] = await findCashboxPDA(cashboxId);
     cashbox = _cashbox;

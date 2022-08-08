@@ -1,6 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { expect, assert } from "chai";
+import { assert, expect } from "chai";
+import { OrderItemOperation } from "../../sdk/ts";
 import {
   createCashbox,
   findCashboxPDA,
@@ -11,7 +12,11 @@ import {
   mockCashierOrderService,
   settleOrderPayment,
 } from "../utils/settle-payment";
-import { fundWallet } from "../utils/solana";
+import {
+  fundWalletWithSOL,
+  getConnection,
+  setupCurrency,
+} from "../utils/solana";
 import { shouldFail } from "../utils/testing";
 
 describe("settle_order_payment instruction", () => {
@@ -26,7 +31,7 @@ describe("settle_order_payment instruction", () => {
   let cashboxBump: number;
 
   before(async () => {
-    await fundWallet(cashier.publicKey);
+    await fundWalletWithSOL(cashier.publicKey);
     cashboxId = generateRandomCashboxId();
     const [_cashbox, _cashboxBump] = await findCashboxPDA(cashboxId);
     cashbox = _cashbox;
@@ -37,24 +42,57 @@ describe("settle_order_payment instruction", () => {
     );
   });
 
-  it("should settle a payment", () => {
+  it.only("should settle a payment", async () => {
     const customer = Keypair.generate();
+    const { utils, createCurrency, fundWallet } = await setupCurrency();
+    const currency = await createCurrency();
+    await Promise.all([
+      fundWallet(cashier.publicKey, 2),
+      fundWallet(customer.publicKey, 2),
+      fundWalletWithSOL(customer.publicKey),
+    ]);
+    const orderItems = [
+      {
+        amount: utils.calculateAmountInDecimals(1),
+        currency,
+        op: OrderItemOperation.DEBIT_CUSTOMER,
+      },
+    ];
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
         cashboxId,
         customer: customer.publicKey,
+        items: orderItems,
       })
     );
-    return settleOrderPayment({
-      cashbox,
-      cashboxId,
-      cashboxBump,
-      serializedOrder,
-      signature,
-      signerPublicKey: cashier.publicKey,
-      customer,
-    });
+
+    try {
+      const tx = await settleOrderPayment({
+        cashbox,
+        cashboxId,
+        cashboxBump,
+        serializedOrder,
+        signature,
+        signerPublicKey: cashier.publicKey,
+        customer,
+        orderItems,
+      });
+      await getConnection().confirmTransaction(tx);
+    } catch (error) {
+      console.info(error.logs);
+      assert.fail(`expected tx to succeed, but error was thrown`);
+    }
+    const [customerBalance, cashierBalance] = await Promise.all([
+      utils.getMintBalanceForWallet(customer.publicKey),
+      utils.getMintBalanceForWallet(cashier.publicKey),
+    ]);
+    expect(customerBalance.toString()).to.eq(
+      String(utils.calculateAmountInDecimals(1))
+    );
+    expect(cashierBalance.toString()).to.eq(
+      String(utils.calculateAmountInDecimals(3))
+    );
   });
 
   it("should settle a payment with maximum ix size", async () => {

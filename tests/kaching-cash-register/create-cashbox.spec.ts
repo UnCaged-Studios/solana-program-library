@@ -6,7 +6,7 @@ import {
   findCashboxPDA,
   generateRandomCashboxId,
 } from "../utils/cashbox";
-import { fundWallet, getConnection } from "../utils/solana";
+import { fundWalletWithSOL, getConnection } from "../utils/solana";
 import { shouldFail } from "../utils/testing";
 
 describe("create_cashbox instruction", () => {
@@ -15,7 +15,7 @@ describe("create_cashbox instruction", () => {
 
   const cashier = Keypair.generate();
 
-  beforeEach(() => fundWallet(cashier.publicKey));
+  beforeEach(() => fundWalletWithSOL(cashier.publicKey));
 
   it("should create a cashbox", async () => {
     const cashboxId = generateRandomCashboxId();
