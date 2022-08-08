@@ -18,7 +18,7 @@ class OrderEncoderContainer {
     public customer: Uint8Array,
     public not_before: number,
     public created_at: number,
-    public cashbox_id: String,
+    public cash_register_id: String,
     public items: Uint8Array
   ) {}
 }
@@ -66,7 +66,7 @@ export const serializeOrder = (order: OrderModel) =>
             ["customer", [32]],
             ["not_before", "u32"],
             ["created_at", "u32"],
-            ["cashbox_id", "string"],
+            ["cash_register_id", "string"],
             ["items", [getItemsBuffAllocation(order.items)]],
           ],
         },
@@ -78,7 +78,7 @@ export const serializeOrder = (order: OrderModel) =>
       order.customer.toBytes(),
       order.notBefore,
       order.createdAt,
-      order.cashboxId,
+      order.cashRegisterId,
       serializeOrderItems(order.items)
     )
   );
@@ -101,6 +101,6 @@ export type OrderModel = {
   customer: PublicKey;
   notBefore: number;
   createdAt: number;
-  cashboxId: string;
+  cashRegisterId: string;
   items: Array<OrderItemModel>;
 };

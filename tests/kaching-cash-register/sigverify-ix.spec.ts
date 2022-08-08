@@ -8,10 +8,10 @@ import {
 } from "@solana/web3.js";
 import { fundWalletWithSOL } from "../utils/solana";
 import {
-  generateRandomCashboxId,
-  findCashboxPDA,
-  createCashbox,
-} from "../utils/cashbox";
+  generateRandomCashRegisterId,
+  findCashRegisterPDA,
+  createCashRegister,
+} from "../utils/cash_register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
 import { shouldFail } from "../utils/testing";
@@ -40,17 +40,17 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   ) => Promise<void>;
 
   const settlePaymentTestFunctionFactory =
-    (cashboxModel: {
-      cashbox: PublicKey;
-      cashboxId: string;
-      cashboxBump: number;
+    (cashRegisterModel: {
+      cashRegister: PublicKey;
+      cashRegisterId: string;
+      cashRegisterBump: number;
     }): typeof settlePayment =>
     async (overrides) => {
       const customer = Keypair.generate();
       const { serializedOrder, signature } = mockCashierOrderService(
         cashier,
         anOrder({
-          cashboxId: cashboxModel.cashboxId,
+          cashRegisterId: cashRegisterModel.cashRegisterId,
           customer: customer.publicKey,
         })
       );
@@ -66,11 +66,11 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       );
       await program.methods
         .settleOrderPayment({
-          cashboxId: cashboxModel.cashboxId,
-          cashboxBump: cashboxModel.cashboxBump,
+          cashRegisterId: cashRegisterModel.cashRegisterId,
+          cashRegisterBump: cashRegisterModel.cashRegisterBump,
         })
         .accounts({
-          cashbox: cashboxModel.cashbox,
+          cashRegister: cashRegisterModel.cashRegister,
           customer: customer.publicKey,
           instructionsSysvar:
             overrides.instructionsSysvar || SYSVAR_INSTRUCTIONS_PUBKEY,
@@ -82,13 +82,15 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
 
   beforeEach(async () => {
     await fundWalletWithSOL(cashier.publicKey);
-    const cashboxId = generateRandomCashboxId();
-    const [cashbox, cashboxBump] = await findCashboxPDA(cashboxId);
-    await createCashbox({ cashboxId }, cashier);
+    const cashRegisterId = generateRandomCashRegisterId();
+    const [cashRegister, cashRegisterBump] = await findCashRegisterPDA(
+      cashRegisterId
+    );
+    await createCashRegister({ cashRegisterId }, cashier);
     settlePayment = settlePaymentTestFunctionFactory({
-      cashboxId,
-      cashbox,
-      cashboxBump,
+      cashRegisterId,
+      cashRegister,
+      cashRegisterBump,
     });
   });
 

@@ -1,11 +1,10 @@
 import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import { expect, assert } from "chai";
 import {
-  createCashbox,
-  findCashboxPDA,
-  generateRandomCashboxId,
-} from "../utils/cashbox";
+  createCashRegister,
+  findCashRegisterPDA,
+  generateRandomCashRegisterId,
+} from "../utils/cash_register";
 import {
   anOrder,
   mockCashierOrderService,
@@ -21,77 +20,90 @@ describe("order validations", () => {
   const cashier = Keypair.generate();
   const knownOrderSigner = Keypair.generate();
 
-  let cashbox: PublicKey;
-  let cashboxId: string;
-  let cashboxBump: number;
+  let cashRegister: PublicKey;
+  let cashRegisterId: string;
+  let cashRegisterBump: number;
 
-  before(async () => {
+  let customer: Keypair;
+
+  beforeAll(async () => {
     await fundWalletWithSOL(cashier.publicKey);
-    cashboxId = generateRandomCashboxId();
-    const [_cashbox, _cashboxBump] = await findCashboxPDA(cashboxId);
-    cashbox = _cashbox;
-    cashboxBump = _cashboxBump;
-    return createCashbox(
-      { cashboxId, orderSignersWhitelist: [knownOrderSigner.publicKey] },
+    cashRegisterId = generateRandomCashRegisterId();
+    const [_cashRegister, _cashRegisterBump] = await findCashRegisterPDA(
+      cashRegisterId
+    );
+    cashRegister = _cashRegister;
+    cashRegisterBump = _cashRegisterBump;
+    return createCashRegister(
+      {
+        cashRegisterId,
+        orderSignersWhitelist: [knownOrderSigner.publicKey],
+      },
       cashier
     );
   });
 
-  it("should fail a payment because of wrong cashboxId", async () => {
-    const customer = Keypair.generate();
+  beforeEach(async () => {
+    customer = Keypair.generate();
+    await fundWalletWithSOL(customer.publicKey);
+  });
+
+  it("should fail a payment because of wrong cashRegister", async () => {
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
-        cashboxId: "blah",
+        cashRegisterId: "blah",
         customer: customer.publicKey,
       })
     );
     return shouldFail(
       () =>
         settleOrderPayment({
-          cashbox,
-          cashboxId,
-          cashboxBump,
+          cashRegister,
+          cashRegisterId,
+          cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: cashier.publicKey,
           customer,
+          orderItems: [],
         }),
-      { code: "OrderCashboxIdMismatch", num: 6003 }
+      { code: "OrderCashRegisterIdMismatch", num: 6003 }
     );
   });
 
   it("should fail a payment because customer of signed transaction is not the customer in order", async () => {
-    const customer = Keypair.generate();
     const evilCustomer = Keypair.generate();
+    await fundWalletWithSOL(evilCustomer.publicKey);
+
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
-        cashboxId,
+        cashRegisterId,
         customer: customer.publicKey,
       })
     );
     return shouldFail(
       () =>
         settleOrderPayment({
-          cashbox,
-          cashboxId,
-          cashboxBump,
+          cashRegister: cashRegister,
+          cashRegisterId: cashRegisterId,
+          cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: cashier.publicKey,
           customer: evilCustomer,
+          orderItems: [],
         }),
       { code: "OrderCustomerMismatch", num: 6004 }
     );
   });
 
   it("should fail a payment because order is expired", async () => {
-    const customer = Keypair.generate();
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
-        cashboxId,
+        cashRegisterId,
         expiry: Date.now() / 1000 - 30, // expired 10 seconds ago
         customer: customer.publicKey,
       })
@@ -99,24 +111,24 @@ describe("order validations", () => {
     return shouldFail(
       () =>
         settleOrderPayment({
-          cashbox,
-          cashboxId,
-          cashboxBump,
+          cashRegister: cashRegister,
+          cashRegisterId: cashRegisterId,
+          cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: cashier.publicKey,
           customer,
+          orderItems: [],
         }),
       { code: "OrderExpired", num: 6005 }
     );
   });
 
   it("should fail a payment because order is not valid yet", async () => {
-    const customer = Keypair.generate();
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
-        cashboxId,
+        cashRegisterId,
         notBefore: Date.now() / 1000 + 30, // order will be valid in 30 seconds
         customer: customer.publicKey,
       })
@@ -124,13 +136,14 @@ describe("order validations", () => {
     return shouldFail(
       () =>
         settleOrderPayment({
-          cashbox,
-          cashboxId,
-          cashboxBump,
+          cashRegister: cashRegister,
+          cashRegisterId: cashRegisterId,
+          cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: cashier.publicKey,
           customer,
+          orderItems: [],
         }),
       { code: "OrderNotValidYet", num: 6006 }
     );

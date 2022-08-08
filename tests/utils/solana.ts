@@ -23,7 +23,7 @@ export const fundWalletWithSOL = async (wallet: PublicKey) => {
     wallet,
     LAMPORTS_PER_SOL
   );
-  await localnetConnection.confirmTransaction(airdropSignature);
+  await confirmTransaction(airdropSignature);
 };
 
 export const setupCurrency = async () => {
@@ -33,7 +33,7 @@ export const setupCurrency = async () => {
   const payer = Keypair.generate();
   const mintAuthority = Keypair.generate();
 
-  let mint: PublicKey;
+  await fundWalletWithSOL(payer.publicKey);
 
   const getAta = (destination: PublicKey) =>
     getOrCreateAssociatedTokenAccount(
@@ -43,19 +43,20 @@ export const setupCurrency = async () => {
       destination
     );
 
+  const mint = await createMint(
+    localnetConnection,
+    payer,
+    mintAuthority.publicKey,
+    null,
+    DECIMALS // We are using 9 to match the CLI decimal default exactly
+  );
+
   return {
-    createCurrency: async () => {
-      await fundWalletWithSOL(payer.publicKey);
-      mint = await createMint(
-        localnetConnection,
-        payer,
-        mintAuthority.publicKey,
-        null,
-        DECIMALS // We are using 9 to match the CLI decimal default exactly
-      );
-      return mint;
-    },
+    currency: mint,
     fundWallet: async (destination: PublicKey, amount: number) => {
+      if (!mint) {
+        throw new Error(`you must `);
+      }
       const ata = await getAta(destination);
       await mintTo(
         localnetConnection,
@@ -63,7 +64,9 @@ export const setupCurrency = async () => {
         mint,
         ata.address,
         mintAuthority,
-        calculateAmountInDecimals(amount)
+        calculateAmountInDecimals(amount),
+        [],
+        { commitment: "finalized" }
       );
     },
     utils: {
@@ -82,3 +85,6 @@ export const setupCurrency = async () => {
 };
 
 export const getConnection = () => localnetConnection;
+
+export const confirmTransaction = (tx: string) =>
+  localnetConnection.confirmTransaction(tx, "finalized");

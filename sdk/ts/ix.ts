@@ -4,6 +4,7 @@ import {
   Keypair,
   PublicKey,
   SYSVAR_INSTRUCTIONS_PUBKEY,
+  ComputeBudgetProgram,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
@@ -33,9 +34,9 @@ async function findAssociatedTokenAddress(
 }
 
 export type SettleOrderPaymentArgs = {
-  cashbox: PublicKey;
-  cashboxId: string;
-  cashboxBump: number;
+  cashRegister: PublicKey;
+  cashRegisterId: string;
+  cashRegisterBump: number;
   serializedOrder: Uint8Array;
   signature: Uint8Array;
   signerPublicKey: PublicKey;
@@ -44,9 +45,9 @@ export type SettleOrderPaymentArgs = {
 };
 
 export const createSettlePaymentTransaction = async ({
-  cashbox,
-  cashboxId,
-  cashboxBump,
+  cashRegister,
+  cashRegisterId,
+  cashRegisterBump,
   serializedOrder,
   signature,
   signerPublicKey,
@@ -82,17 +83,24 @@ export const createSettlePaymentTransaction = async ({
     )
   ).flatMap((i) => i);
 
+  const computeBudgetIx =
+    orderItems.length > 5
+      ? ComputeBudgetProgram.setComputeUnitLimit({
+          units: 1_500_000,
+        })
+      : undefined;
+
   return program.methods
     .settleOrderPayment({
-      cashboxId,
-      cashboxBump,
+      cashRegisterId,
+      cashRegisterBump,
     })
     .accounts({
-      cashbox,
+      cashRegister,
       instructionsSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
       customer: customer.publicKey,
     })
     .remainingAccounts(orderItemsAccounts)
-    .preInstructions([ixEd25519Program])
+    .preInstructions([ixEd25519Program, computeBudgetIx].filter(Boolean))
     .transaction();
 };

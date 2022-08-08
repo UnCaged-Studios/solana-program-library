@@ -1,7 +1,6 @@
 import { Keypair } from "@solana/web3.js";
 import nacl from "tweetnacl";
 import {
-  OrderItemOperation,
   OrderModel,
   serializeOrder,
   createSettlePaymentTransaction,
@@ -13,26 +12,15 @@ const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
 
 export const anOrder = (
-  input: Partial<OrderModel> & Pick<OrderModel, "cashboxId" | "customer">
+  input: Partial<OrderModel> & Pick<OrderModel, "cashRegisterId" | "customer">
 ) => ({
   id: input.id || 100000,
   customer: input.customer,
-  cashboxId: input.cashboxId,
+  cashRegisterId: input.cashRegisterId,
   expiry: input.expiry || Date.now() / 1000 + 1000, // 1000 seconds into the future
   notBefore: input.notBefore || Date.now() / 1000 - 1000, // 1000 seconds ago
   createdAt: input.createdAt || Date.now() / 1000,
-  items: input.items || [
-    {
-      op: OrderItemOperation.CREDIT_CUSTOMER,
-      amount: 42,
-      currency: Keypair.generate().publicKey,
-    },
-    {
-      op: OrderItemOperation.DEBIT_CUSTOMER,
-      amount: 73,
-      currency: Keypair.generate().publicKey,
-    },
-  ],
+  items: input.items || [],
 });
 
 export const mockCashierOrderService = (

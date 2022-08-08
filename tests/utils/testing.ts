@@ -1,7 +1,5 @@
-import { assert } from "chai";
-
 export const shouldFail = async (
-  testFn: () => Promise<void>,
+  testFn: () => Promise<any>,
   expectedError:
     | {
         code: string;
@@ -23,9 +21,21 @@ export const shouldFail = async (
       // test success
       return;
     }
-    console.error(error.message);
-    console.error(error.logs);
-    assert.fail(`expected tx to throw error that includes '${sbstr}'`);
+    console.error("error message: ", error.message);
+    console.error("error logs: ", error.logs);
+    throw new Error(`expected tx to throw error that includes '${sbstr}'`);
   }
-  assert.fail("expected tx to throw error, but it succeeded");
+  throw new Error("expected tx to throw error, but it succeeded");
 };
+
+export const shouldSucceed =
+  (testFn: (...args: any[]) => Promise<any>) =>
+  async (...args: any[]) => {
+    try {
+      await testFn(...args);
+    } catch (error) {
+      console.error(error.message);
+      console.error(error.logs);
+      throw new Error(`expected tx to succeeed, but error was thrown`);
+    }
+  };

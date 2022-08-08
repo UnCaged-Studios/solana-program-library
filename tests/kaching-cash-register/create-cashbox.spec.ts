@@ -1,15 +1,14 @@
 import * as anchor from "@project-serum/anchor";
 import { Keypair } from "@solana/web3.js";
-import { assert, expect } from "chai";
 import {
-  createCashbox,
-  findCashboxPDA,
-  generateRandomCashboxId,
-} from "../utils/cashbox";
+  createCashRegister,
+  findCashRegisterPDA,
+  generateRandomCashRegisterId,
+} from "../utils/cash_register";
 import { fundWalletWithSOL, getConnection } from "../utils/solana";
-import { shouldFail } from "../utils/testing";
+import { shouldFail, shouldSucceed } from "../utils/testing";
 
-describe("create_cashbox instruction", () => {
+describe("create_cash_register instruction", () => {
   // Configure the client to use the local cluster.
   anchor.setProvider(anchor.AnchorProvider.env());
 
@@ -17,53 +16,56 @@ describe("create_cashbox instruction", () => {
 
   beforeEach(() => fundWalletWithSOL(cashier.publicKey));
 
-  it("should create a cashbox", async () => {
-    const cashboxId = generateRandomCashboxId();
-    return createCashbox({ cashboxId }, cashier);
-  });
+  it(
+    "should create a cash register",
+    shouldSucceed(() => {
+      const cashRegisterId = generateRandomCashRegisterId();
+      return createCashRegister({ cashRegisterId }, cashier);
+    })
+  );
 
-  it("should fail to create a cashbox if already exists", async () => {
-    const cashboxId = generateRandomCashboxId();
-    const [cashbox] = await findCashboxPDA(cashboxId);
-    await createCashbox({ cashboxId }, cashier);
+  it("should fail to create a cashRegister if already exists", async () => {
+    const cashRegisterId = generateRandomCashRegisterId();
+    const [cashRegister] = await findCashRegisterPDA(cashRegisterId);
+    await createCashRegister({ cashRegisterId }, cashier);
 
     return shouldFail(
-      () => createCashbox({ cashboxId }, cashier),
-      `Allocate: account Address { address: ${cashbox.toBase58()}, base: None } already in use`
+      () => createCashRegister({ cashRegisterId }, cashier),
+      `Allocate: account Address { address: ${cashRegister.toBase58()}, base: None } already in use`
     );
   });
 
-  describe("cashbox account data", () => {
-    it("should create a cashbox with bump and cashier PublicKey in its data", async () => {
-      const cashboxId = generateRandomCashboxId();
-      const [[cashbox, bump]] = await Promise.all([
-        findCashboxPDA(cashboxId),
-        createCashbox(
+  describe("cashRegister account data", () => {
+    it("should create a cashRegister with bump and cashier PublicKey in its data", async () => {
+      const cashRegisterId = generateRandomCashRegisterId();
+      const [[cashRegister, bump]] = await Promise.all([
+        findCashRegisterPDA(cashRegisterId),
+        createCashRegister(
           {
-            cashboxId,
+            cashRegisterId,
           },
           cashier,
           { waitForTx: true }
         ),
       ]);
       const connection = getConnection();
-      const { data } = await connection.getAccountInfo(cashbox);
+      const { data } = await connection.getAccountInfo(cashRegister);
       const rawAccount = data.subarray(8); // remove 8 bytes descriminator
       const cashierPublicKey = rawAccount.subarray(1, 33); // cashier (PublicKey)
 
-      expect(rawAccount[0]).to.eq(bump); // bump (u8)
-      expect(cashierPublicKey).to.deep.equal(cashier.publicKey.toBuffer());
+      expect(rawAccount[0]).toEqual(bump); // bump (u8)
+      expect(cashierPublicKey).toEqual(cashier.publicKey.toBuffer());
     });
 
-    it("should create a cashbox with order_signers_whitelist in its data", async () => {
-      const cashboxId = generateRandomCashboxId();
+    it("should create a cashRegister with order_signers_whitelist in its data", async () => {
+      const cashRegisterId = generateRandomCashRegisterId();
       const orderSigner1 = Keypair.generate().publicKey;
       const orderSigner2 = Keypair.generate().publicKey;
-      const [[cashbox]] = await Promise.all([
-        findCashboxPDA(cashboxId),
-        createCashbox(
+      const [[cashRegister]] = await Promise.all([
+        findCashRegisterPDA(cashRegisterId),
+        createCashRegister(
           {
-            cashboxId,
+            cashRegisterId,
             orderSignersWhitelist: [orderSigner1, orderSigner2],
           },
           cashier,
@@ -71,19 +73,19 @@ describe("create_cashbox instruction", () => {
         ),
       ]);
       const connection = getConnection();
-      const { data } = await connection.getAccountInfo(cashbox);
+      const { data } = await connection.getAccountInfo(cashRegister);
       const rawAccount = data.subarray(8); // remove 8 bytes descriminator
       const orderSignersWhitelistBuffer = rawAccount.subarray(33, 33 + 160); // order_signers_whitelist: Vec<Pubkey>
       const keysOffset = 4;
       const remainsOffset = keysOffset + 32 * 3;
       const length = orderSignersWhitelistBuffer.subarray(0, keysOffset);
-      expect(length).to.deep.equal(Buffer.from([3, 0, 0, 0])); // length of 3 keys
+      expect(length).toEqual(Buffer.from([3, 0, 0, 0])); // length of 3 keys
 
       const pubkeys = orderSignersWhitelistBuffer.subarray(
         keysOffset,
         remainsOffset
       );
-      expect(pubkeys).to.deep.equal(
+      expect(pubkeys).toEqual(
         Buffer.concat([
           orderSigner1.toBytes(),
           orderSigner2.toBytes(),
@@ -92,61 +94,64 @@ describe("create_cashbox instruction", () => {
       );
 
       const emptySpace = orderSignersWhitelistBuffer.subarray(remainsOffset);
-      expect(emptySpace).to.deep.equal(
+      expect(emptySpace).toEqual(
         Buffer.from(new Array(160 - remainsOffset).fill(0))
       );
     });
 
-    it("should failt to create a cashbox if order_signers_whitelist is bigger than 5", async () => {
-      const cashboxId = generateRandomCashboxId();
+    it("should failt to create a cashRegister if order_signers_whitelist is bigger than 5", async () => {
+      const cashRegisterId = generateRandomCashRegisterId();
       const orderSignersWhitelist = new Array(5)
         .fill(0)
         .map(() => Keypair.generate().publicKey);
       return shouldFail(
         () =>
-          createCashbox(
+          createCashRegister(
             {
-              cashboxId,
+              cashRegisterId,
               orderSignersWhitelist,
             },
             cashier,
             { waitForTx: true }
           ),
-        { code: "CashboxOrderSignersWhilelistOverflow", num: 6001 }
+        { code: "CashRegisterOrderSignersWhilelistOverflow", num: 6001 }
       );
     });
   });
 
-  describe("cashbox id validations", () => {
-    it("should fail to create a cashbox if id is invalid with proper error message", async () => {
-      const id = generateRandomCashboxId();
-      return shouldFail(() => createCashbox({ cashboxId: `#${id}` }, cashier), {
-        code: "CashboxIdInvalid",
-        num: 6000,
-      });
+  describe("cashRegister id validations", () => {
+    it("should fail to create a cashRegister if id is invalid with proper error message", async () => {
+      const id = generateRandomCashRegisterId();
+      return shouldFail(
+        () => createCashRegister({ cashRegisterId: `#${id}` }, cashier),
+        {
+          code: "CashRegisterIdInvalid",
+          num: 6000,
+        }
+      );
     });
 
-    it("should fail to create a cashbox if id is invalid", async () => {
-      const random = generateRandomCashboxId("");
+    it("should fail to create a cashRegister if id is invalid", async () => {
+      const random = generateRandomCashRegisterId("");
       const failures = (
         await Promise.all(
           [
-            `Cashbox_${random}`, // no capital letters
-            `cashbox-${random}`, // no dash
-            `cas$hbox_${random}`, // no symbols ($)
-            `cashbox.${random}`, // no dots
-            `cashbox/${random}`, // no slashes
+            `CashRegister_${random}`, // no capital letters
+            `cashregister-${random}`, // no dash
+            `cas$register_${random}`, // no symbols ($)
+            `cashregister.${random}`, // no dots
+            `cashregister/${random}`, // no slashes
             `${random.substring(0, 2)}`, // no length < 3,
             `${new Array(Math.ceil(50 / random.length) + 1).join(random)}`, // no length > 50
           ].map(
             (id) =>
-              createCashbox({ cashboxId: id }, cashier)
+              createCashRegister({ cashRegisterId: id }, cashier)
                 .then(() => id) // if no error was thrown, it's a failure, return id
                 .catch(() => undefined) // if error was thrown, it's success, return undefined
           )
         )
       ).filter(Boolean);
-      expect(failures).to.deep.equal([]);
+      expect(failures).toEqual([]);
     });
   });
 });

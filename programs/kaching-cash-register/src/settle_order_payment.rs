@@ -54,7 +54,7 @@ pub mod utils {
         pub customer: Pubkey,
         pub not_before: u32,
         pub created_at: u32,
-        pub cashbox_id: String,
+        pub cash_register_id: String,
         pub items: Vec<OrderItem>,
     }
 

@@ -15,7 +15,7 @@ pub mod utils {
         }
     }
 
-    pub fn is_cashbox_id_valid(id: &String) -> bool {
+    pub fn is_cash_register_id_valid(id: &String) -> bool {
         let val = id.as_bytes();
         return is_valid_cashobox_id_length(val.len()) && val.iter().all(|b| is_valid_char(b));
     }

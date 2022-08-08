@@ -1,8 +1,8 @@
-mod create_cashbox;
+mod create_cash_register;
 mod errors;
 mod settle_order_payment;
 
-use crate::create_cashbox::utils as create_cashbox_utils;
+use crate::create_cash_register::utils as create_cash_register_utils;
 use crate::errors::ErrorCode;
 use crate::settle_order_payment::utils as settle_order_payment_utils;
 use anchor_lang::prelude::*;
@@ -15,27 +15,31 @@ use spl_associated_token_account::get_associated_token_address;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
-const CASHBOX_PDA_SEED: &[u8] = b"cashbox";
+const CASH_REGISTER_PDA_SEED: &[u8] = b"cashregister";
 const ORDER_SIGNERS_WHITELIST_LIMIT: usize = 5;
 
 #[program]
 pub mod kaching_cash_register {
     use super::*;
 
-    pub fn create_cashbox(ctx: Context<CreateCashBox>, ix_args: CreateCashBoxArgs) -> Result<()> {
-        if false == create_cashbox_utils::is_cashbox_id_valid(&ix_args.cashbox_id) {
-            return err!(ErrorCode::CashboxIdInvalid);
+    pub fn create_cash_register(
+        ctx: Context<CreateCashRegister>,
+        ix_args: CreateCashRegisterArgs,
+    ) -> Result<()> {
+        if false == create_cash_register_utils::is_cash_register_id_valid(&ix_args.cash_register_id)
+        {
+            return err!(ErrorCode::CashRegisterIdInvalid);
         }
 
-        ctx.accounts.cashbox.bump = *ctx.bumps.get("cashbox").unwrap();
-        ctx.accounts.cashbox.cashier = *ctx.accounts.cashier.to_account_info().key;
+        ctx.accounts.cash_register.bump = *ctx.bumps.get("cash_register").unwrap();
+        ctx.accounts.cash_register.cashier = *ctx.accounts.cashier.to_account_info().key;
 
         let mut all_order_signers = Vec::from(ix_args.order_signers_whitelist);
-        all_order_signers.push(ctx.accounts.cashbox.cashier);
+        all_order_signers.push(ctx.accounts.cash_register.cashier);
         if all_order_signers.len() > ORDER_SIGNERS_WHITELIST_LIMIT {
-            return err!(ErrorCode::CashboxOrderSignersWhilelistOverflow);
+            return err!(ErrorCode::CashRegisterOrderSignersWhilelistOverflow);
         }
-        ctx.accounts.cashbox.order_signers_whitelist = all_order_signers;
+        ctx.accounts.cash_register.order_signers_whitelist = all_order_signers;
 
         Ok(())
     }
@@ -50,7 +54,7 @@ pub mod kaching_cash_register {
         if false
             == ctx
                 .accounts
-                .cashbox
+                .cash_register
                 .order_signers_whitelist
                 .contains(&order_signer_pubkey)
         {
@@ -59,8 +63,8 @@ pub mod kaching_cash_register {
 
         let signed_order = settle_order_payment_utils::deserialize_order(&order)?;
 
-        if signed_order.cashbox_id != ix_args.cashbox_id {
-            return err!(ErrorCode::OrderCashboxIdMismatch);
+        if signed_order.cash_register_id != ix_args.cash_register_id {
+            return err!(ErrorCode::OrderCashRegisterIdMismatch);
         }
         if false == signed_order.customer.eq(ctx.accounts.customer.key) {
             return err!(ErrorCode::OrderCustomerMismatch);
@@ -84,7 +88,7 @@ pub mod kaching_cash_register {
             let (from, to) = {
                 let customer_ata =
                     find_ata(ctx.accounts.customer.key).ok_or(ErrorCode::OrderItemAtaMissing)?;
-                let cashier_ata = find_ata(&ctx.accounts.cashbox.cashier)
+                let cashier_ata = find_ata(&ctx.accounts.cash_register.cashier)
                     .ok_or(ErrorCode::OrderItemAtaMissing)?;
                 match item.op {
                     0 => Ok((cashier_ata, customer_ata)), // CREDIT_CUSTOMER
@@ -93,14 +97,6 @@ pub mod kaching_cash_register {
                 }
             }?;
             let amount = u64::try_from(item.amount).unwrap();
-
-            msg!(
-                "transfer {} tokens {} from {:?} to {:?}",
-                amount,
-                item.currency,
-                from.to_account_info(),
-                to.to_account_info()
-            );
             let cpi_ctx = CpiContext::new(
                 ctx.accounts.token_program.to_account_info(),
                 token::Transfer {
@@ -117,48 +113,48 @@ pub mod kaching_cash_register {
     }
 }
 
-// create cashbox with initial configuration. If cashbox already exists (per given cashbox_id) the instruction will fail.
+// create cash-regiser with initial configuration. If cash-regiser already exists (per given cash-regiser_id) the instruction will fail.
 #[account]
-pub struct CashRegisterCashbox {
+pub struct CashRegister {
     bump: u8,
     cashier: Pubkey,
     order_signers_whitelist: Vec<Pubkey>,
 }
 
-impl CashRegisterCashbox {
+impl CashRegister {
     pub const LEN: usize =
-        1 // cashbox_bump,
+        1 // cash_regiser bump,
         + 32 // cashier public key
         + (32 * ORDER_SIGNERS_WHITELIST_LIMIT) // array of public keys
         ;
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
-pub struct CreateCashBoxArgs {
-    pub cashbox_id: String,
+pub struct CreateCashRegisterArgs {
+    pub cash_register_id: String,
     pub order_signers_whitelist: Vec<Pubkey>,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
 pub struct SettleOrderPaymentArgs {
-    pub cashbox_id: String,
-    pub cashbox_bump: u8,
+    pub cash_register_id: String,
+    pub cash_register_bump: u8,
 }
 
 #[derive(Accounts)]
-#[instruction(ix_args: CreateCashBoxArgs)]
-pub struct CreateCashBox<'info> {
+#[instruction(ix_args: CreateCashRegisterArgs)]
+pub struct CreateCashRegister<'info> {
     #[account(mut)]
-    pub cashier: Signer<'info>,
+    pub cashier: Signer<'info>, // TODO: rename to 'manager'
 
     #[account(
         init,
         payer = cashier,
-        space = 8 + CashRegisterCashbox::LEN,
-        seeds = [CASHBOX_PDA_SEED.as_ref(), ix_args.cashbox_id.as_bytes().as_ref()],
+        space = 8 + CashRegister::LEN,
+        seeds = [CASH_REGISTER_PDA_SEED.as_ref(), ix_args.cash_register_id.as_bytes().as_ref()],
         bump
     )]
-    pub cashbox: Account<'info, CashRegisterCashbox>,
+    pub cash_register: Account<'info, CashRegister>,
 
     pub system_program: Program<'info, System>,
 }
@@ -171,10 +167,10 @@ pub struct SettleOrderPayment<'info> {
 
     #[account(
         mut,
-        seeds = [CASHBOX_PDA_SEED.as_ref(), ix_args.cashbox_id.as_bytes().as_ref()],
-        bump = ix_args.cashbox_bump,
+        seeds = [CASH_REGISTER_PDA_SEED.as_ref(), ix_args.cash_register_id.as_bytes().as_ref()],
+        bump = ix_args.cash_register_bump,
     )]
-    pub cashbox: Account<'info, CashRegisterCashbox>,
+    pub cash_register: Account<'info, CashRegister>,
 
     /// CHECK: This is not dangerous because we explicitly check the id
     #[account(address = instructions_sysvar_module::ID)]

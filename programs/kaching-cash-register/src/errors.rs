@@ -2,17 +2,17 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum ErrorCode {
-    #[msg("cashbox_id is invalid, should be only ascii characters, of length 3-50")]
-    CashboxIdInvalid,
+    #[msg("cash_register_id is invalid, should be only ascii characters, of length 3-50")]
+    CashRegisterIdInvalid,
 
-    #[msg("cashbox can only have up to 5 order signers in whitelist")]
-    CashboxOrderSignersWhilelistOverflow,
+    #[msg("cash register can only have up to 5 order signers in whitelist")]
+    CashRegisterOrderSignersWhilelistOverflow,
 
     #[msg("order was not signed by a known order signers")]
     UnknownOrderSigner,
 
-    #[msg("cashbox_id in order does not match the cashbox provided in instruction")]
-    OrderCashboxIdMismatch,
+    #[msg("cash_register_id in order does not match the cash register provided in instruction")]
+    OrderCashRegisterIdMismatch,
 
     #[msg("tx signer does not match customer registered in order")]
     OrderCustomerMismatch,
