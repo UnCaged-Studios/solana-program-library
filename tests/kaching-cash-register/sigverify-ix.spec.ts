@@ -11,7 +11,7 @@ import {
   generateRandomCashRegisterId,
   findCashRegisterPDA,
   createCashRegister,
-} from "../utils/cash_register";
+} from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
 import { shouldFail } from "../utils/testing";

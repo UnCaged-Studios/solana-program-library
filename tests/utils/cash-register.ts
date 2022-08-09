@@ -1,11 +1,10 @@
 import * as anchor from "@project-serum/anchor";
-import { Program } from "@project-serum/anchor";
 import { PublicKey } from "@solana/web3.js";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
 import { confirmTransaction } from "./solana";
 
 const program = anchor.workspace
-  .KachingCashRegister as Program<KachingCashRegister>;
+  .KachingCashRegister as anchor.Program<KachingCashRegister>;
 
 const randomLowerCaseCharCode = () =>
   [1, 2, 3]

@@ -4,7 +4,7 @@ import {
   createCashRegister,
   findCashRegisterPDA,
   generateRandomCashRegisterId,
-} from "../../utils/cash_register";
+} from "../../utils/cash-register";
 import { fundWalletWithSOL } from "../../utils/solana";
 
 export type SettlePaymentTestEnv = {

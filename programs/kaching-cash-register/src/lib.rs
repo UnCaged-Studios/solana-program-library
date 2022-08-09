@@ -9,7 +9,7 @@ use anchor_lang::prelude::*;
 use anchor_lang::solana_program::sysvar::{
     clock::Clock, instructions as instructions_sysvar_module,
 };
-use anchor_spl::token::{self, Token};
+use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use solana_program::account_info::AccountInfo;
 use spl_associated_token_account::get_associated_token_address;
 
@@ -117,6 +117,14 @@ pub mod kaching_cash_register {
 
         Ok(())
     }
+
+    pub fn create_token_cashbox(
+        ctx: Context<CreateTokenCashbox>,
+        ix_args: CreateTokenCashboxArgs,
+    ) -> Result<()> {
+        // ctx.accounts.token_cashbox
+        Ok(())
+    }
 }
 
 // create cash-regiser with initial configuration. If cash-regiser already exists (per given cash-regiser_id) the instruction will fail.
@@ -146,6 +154,11 @@ pub struct CreateCashRegisterArgs {
 pub struct SettleOrderPaymentArgs {
     pub cash_register_id: String,
     pub cash_register_bump: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
+pub struct CreateTokenCashboxArgs {
+    pub token_mint_key: Pubkey,
 }
 
 #[derive(Accounts)]
@@ -183,4 +196,32 @@ pub struct SettleOrderPayment<'info> {
     #[account(address = instructions_sysvar_module::ID)]
     pub instructions_sysvar: AccountInfo<'info>,
     pub token_program: Program<'info, Token>,
+}
+
+#[derive(Accounts)]
+#[instruction(ix: CreateTokenCashboxArgs)]
+pub struct CreateTokenCashbox<'info> {
+    #[account(mut)]
+    pub cashier: Signer<'info>, // TODO: rename to 'manager'
+
+    #[account(address = ix.token_mint_key)]
+    pub token_mint: Box<Account<'info, Mint>>,
+
+    #[account(mut)]
+    pub cash_register: Account<'info, CashRegister>,
+
+    #[account(
+        init,
+        payer = cashier,
+        token::mint = token_mint,
+        token::authority = token_cashbox,
+        seeds = [ cash_register.cash_register_id.as_ref(), ix.token_mint_key.as_ref() ],
+        bump,
+    )]
+    pub token_cashbox: Account<'info, TokenAccount>,
+
+    // needed because of token_cashbox account
+    pub system_program: Program<'info, System>,
+    pub token_program: Program<'info, Token>,
+    pub rent: Sysvar<'info, Rent>,
 }
