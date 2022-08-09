@@ -31,6 +31,7 @@ pub mod kaching_cash_register {
             return err!(ErrorCode::CashRegisterIdInvalid);
         }
 
+        ctx.accounts.cash_register.cash_register_id = ix_args.cash_register_id;
         ctx.accounts.cash_register.bump = *ctx.bumps.get("cash_register").unwrap();
         ctx.accounts.cash_register.cashier = *ctx.accounts.cashier.to_account_info().key;
 
@@ -81,18 +82,23 @@ pub mod kaching_cash_register {
         let mut order_items_atas = ctx.remaining_accounts.iter();
 
         for item in signed_order.items.iter() {
-            let mut find_ata = |pubkey: &Pubkey| {
-                let ata_pubkey = get_associated_token_address(pubkey, &item.currency);
+            let mut find_ata = |wallet: &Pubkey| {
+                let ata_pubkey = get_associated_token_address(wallet, &item.currency);
                 order_items_atas.find(|ac| ac.key.eq(&ata_pubkey))
             };
-            let (from, to) = {
+            let (from, to, authority) = {
                 let customer_ata =
                     find_ata(ctx.accounts.customer.key).ok_or(ErrorCode::OrderItemAtaMissing)?;
+                // FIXME - use "token_cashbox": Account<'info, TokenAccount>
                 let cashier_ata = find_ata(&ctx.accounts.cash_register.cashier)
                     .ok_or(ErrorCode::OrderItemAtaMissing)?;
                 match item.op {
-                    0 => Ok((cashier_ata, customer_ata)), // CREDIT_CUSTOMER
-                    1 => Ok((customer_ata, cashier_ata)), // DEBIT_CUSTOMER
+                    0 => Ok((cashier_ata, customer_ata, None)), // CREDIT_CUSTOMER
+                    1 => Ok((
+                        customer_ata,
+                        cashier_ata,
+                        Some(ctx.accounts.customer.to_account_info()),
+                    )), // DEBIT_CUSTOMER
                     _ => err!(ErrorCode::OrderItemUnknownOperation),
                 }
             }?;
@@ -102,7 +108,7 @@ pub mod kaching_cash_register {
                 token::Transfer {
                     from: from.to_account_info(),
                     to: to.to_account_info(),
-                    authority: ctx.accounts.customer.to_account_info(),
+                    authority: authority.unwrap().to_account_info(),
                 },
             );
             token::transfer(cpi_ctx, amount)?;
@@ -116,6 +122,7 @@ pub mod kaching_cash_register {
 // create cash-regiser with initial configuration. If cash-regiser already exists (per given cash-regiser_id) the instruction will fail.
 #[account]
 pub struct CashRegister {
+    cash_register_id: String,
     bump: u8,
     cashier: Pubkey,
     order_signers_whitelist: Vec<Pubkey>,

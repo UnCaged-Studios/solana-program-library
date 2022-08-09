@@ -36,6 +36,33 @@ describe("create_cash_register instruction", () => {
   });
 
   describe("cashRegister account data", () => {
+    const deserialize = (data: Buffer) => {
+      const raw = data.subarray(8); // remove 8 bytes descriminator
+      const cashRegisterIdLength = raw[0];
+      const buff_cashRegisterId = Buffer.alloc(cashRegisterIdLength);
+      const bumpOffset = 4 + cashRegisterIdLength;
+      raw.copy(buff_cashRegisterId, 0, 4, bumpOffset);
+      const raw2 = raw.subarray(bumpOffset); // remove cash_resgister_id
+      const bump = Number(raw2[0]);
+      const cashierPublicKey = raw2.subarray(1, 33); // cashier (PublicKey)
+
+      const orderSignersWhitelistBuffer = raw2.subarray(33, 33 + 160); // order_signers_whitelist: Vec<Pubkey>
+      const keysOffset = 4;
+      const remainsOffset = keysOffset + 32 * 3;
+      const pubkeys = orderSignersWhitelistBuffer.subarray(
+        keysOffset,
+        remainsOffset
+      );
+      const emptySpace = orderSignersWhitelistBuffer.subarray(remainsOffset);
+      return {
+        cashRegisterId: buff_cashRegisterId.toString("ascii"),
+        bump,
+        cashierPublicKey,
+        pubkeys,
+        emptySpace,
+      };
+    };
+
     it("should create a cashRegister with bump and cashier PublicKey in its data", async () => {
       const cashRegisterId = generateRandomCashRegisterId();
       const [[cashRegister, bump]] = await Promise.all([
@@ -50,11 +77,12 @@ describe("create_cash_register instruction", () => {
       ]);
       const connection = getConnection();
       const { data } = await connection.getAccountInfo(cashRegister);
-      const rawAccount = data.subarray(8); // remove 8 bytes descriminator
-      const cashierPublicKey = rawAccount.subarray(1, 33); // cashier (PublicKey)
+      const accountData = deserialize(data);
 
-      expect(rawAccount[0]).toEqual(bump); // bump (u8)
-      expect(cashierPublicKey).toEqual(cashier.publicKey.toBuffer());
+      expect(accountData.bump).toEqual(bump); // bump (u8)
+      expect(accountData.cashierPublicKey).toEqual(
+        cashier.publicKey.toBuffer()
+      );
     });
 
     it("should create a cashRegister with order_signers_whitelist in its data", async () => {
@@ -74,29 +102,16 @@ describe("create_cash_register instruction", () => {
       ]);
       const connection = getConnection();
       const { data } = await connection.getAccountInfo(cashRegister);
-      const rawAccount = data.subarray(8); // remove 8 bytes descriminator
-      const orderSignersWhitelistBuffer = rawAccount.subarray(33, 33 + 160); // order_signers_whitelist: Vec<Pubkey>
-      const keysOffset = 4;
-      const remainsOffset = keysOffset + 32 * 3;
-      const length = orderSignersWhitelistBuffer.subarray(0, keysOffset);
-      expect(length).toEqual(Buffer.from([3, 0, 0, 0])); // length of 3 keys
+      const accountData = deserialize(data);
 
-      const pubkeys = orderSignersWhitelistBuffer.subarray(
-        keysOffset,
-        remainsOffset
-      );
-      expect(pubkeys).toEqual(
+      expect(accountData.pubkeys).toEqual(
         Buffer.concat([
           orderSigner1.toBytes(),
           orderSigner2.toBytes(),
           cashier.publicKey.toBytes(),
         ])
       );
-
-      const emptySpace = orderSignersWhitelistBuffer.subarray(remainsOffset);
-      expect(emptySpace).toEqual(
-        Buffer.from(new Array(160 - remainsOffset).fill(0))
-      );
+      expect(accountData.emptySpace.every((b) => b === 0)).toBeTruthy();
     });
 
     it("should failt to create a cashRegister if order_signers_whitelist is bigger than 5", async () => {
