@@ -26,40 +26,40 @@ export const fundWalletWithSOL = async (wallet: PublicKey) => {
   await confirmTransaction(airdropSignature);
 };
 
-export const setupCurrency = async () => {
-  const DECIMALS = 6;
-  const calculateAmountInDecimals = (n: number) => n * Math.pow(10, DECIMALS);
+const CURRENCY_DECIMALS = 6;
 
-  const payer = Keypair.generate();
+const payer = Keypair.generate();
+
+const resolveAssociatedTokenAccount = async (
+  destination: PublicKey,
+  mint: PublicKey
+) =>
+  PublicKey.isOnCurve(destination)
+    ? getOrCreateAssociatedTokenAccount(
+        localnetConnection,
+        payer,
+        mint,
+        destination
+      ).then((ac) => ac.address)
+    : destination;
+
+export const setupCurrency = async () => {
   const mintAuthority = Keypair.generate();
 
   await fundWalletWithSOL(payer.publicKey);
-
-  const resolveAssociatedTokenAccount = async (destination: PublicKey) =>
-    PublicKey.isOnCurve(destination)
-      ? getOrCreateAssociatedTokenAccount(
-          localnetConnection,
-          payer,
-          mint,
-          destination
-        ).then((ac) => ac.address)
-      : destination;
 
   const mint = await createMint(
     localnetConnection,
     payer,
     mintAuthority.publicKey,
     null,
-    DECIMALS // We are using 9 to match the CLI decimal default exactly
+    CURRENCY_DECIMALS // We are using 9 to match the CLI decimal default exactly
   );
 
   return {
     currency: mint,
     fundWallet: async (destination: PublicKey, amount: number) => {
-      if (!mint) {
-        throw new Error(`you must `);
-      }
-      const ata = await resolveAssociatedTokenAccount(destination);
+      const ata = await resolveAssociatedTokenAccount(destination, mint);
       await mintTo(
         localnetConnection,
         payer,
@@ -71,16 +71,22 @@ export const setupCurrency = async () => {
         { commitment: "finalized" }
       );
     },
-    utils: {
-      calculateAmountInDecimals,
-      getMintInfo: () => getMint(localnetConnection, mint),
-      getMintBalanceForWallet: async (wallet: PublicKey) => {
-        const ata = await resolveAssociatedTokenAccount(wallet);
-        const tokenAccountInfo = await getAccount(localnetConnection, ata);
-        return tokenAccountInfo.amount;
-      },
-    },
   };
+};
+
+export const calculateAmountInDecimals = (n: number) =>
+  n * Math.pow(10, CURRENCY_DECIMALS);
+
+export const getMintInfo = (mint: PublicKey) =>
+  getMint(localnetConnection, mint);
+
+export const getMintBalanceForWallet = async (
+  wallet: PublicKey,
+  mint: PublicKey
+) => {
+  const ata = await resolveAssociatedTokenAccount(wallet, mint);
+  const tokenAccountInfo = await getAccount(localnetConnection, ata);
+  return tokenAccountInfo.amount;
 };
 
 export const getConnection = () => localnetConnection;

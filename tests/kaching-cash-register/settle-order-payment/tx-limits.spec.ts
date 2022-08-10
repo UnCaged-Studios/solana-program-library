@@ -4,7 +4,12 @@ import {
   anOrder,
   settleOrderPayment,
 } from "../../utils/settle-payment";
-import { confirmTransaction, setupCurrency } from "../../utils/solana";
+import {
+  calculateAmountInDecimals,
+  confirmTransaction,
+  getMintBalanceForWallet,
+  setupCurrency,
+} from "../../utils/solana";
 import { shouldSucceed } from "../../utils/testing";
 import { createTokenCashbox } from "../../utils/token-cashbox";
 import { registerSettleOrderPaymentTest, SettlePaymentTestEnv } from "./runner";
@@ -21,7 +26,7 @@ registerSettleOrderPaymentTest(
       customer,
       cashRegisterBump,
     }: SettlePaymentTestEnv) => {
-      const { utils, currency, fundWallet } = await setupCurrency();
+      const { currency, fundWallet } = await setupCurrency();
 
       const customerInitialBalance = 25;
 
@@ -40,7 +45,7 @@ registerSettleOrderPaymentTest(
         .fill(0)
         .map(() => ({
           op: OrderItemOperation.DEBIT_CUSTOMER,
-          amount: utils.calculateAmountInDecimals(1),
+          amount: calculateAmountInDecimals(1),
           currency,
         }));
 
@@ -66,10 +71,11 @@ registerSettleOrderPaymentTest(
 
       await confirmTransaction(tx);
 
-      const customerBalance = await utils.getMintBalanceForWallet(
-        customer.publicKey
+      const customerBalance = await getMintBalanceForWallet(
+        customer.publicKey,
+        currency
       );
-      const expectedBalance = utils.calculateAmountInDecimals(
+      const expectedBalance = calculateAmountInDecimals(
         customerInitialBalance - MAXIMUM_ORDER_ITEMS_LENGTH
       );
       expect(customerBalance.toString()).toEqual(String(expectedBalance));

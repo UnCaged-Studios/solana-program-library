@@ -85,6 +85,7 @@ pub mod kaching_cash_register {
         for item in signed_order.items.iter() {
             let mut find_ata_in_accounts =
                 |ata_pubkey: &Pubkey| order_items_atas.find(|ac| ac.key.eq(&ata_pubkey));
+
             let find_cashbox_pda = || {
                 Pubkey::find_program_address(
                     &[
@@ -94,40 +95,51 @@ pub mod kaching_cash_register {
                     ctx.program_id,
                 )
             };
-            let (from, to, authority) = {
-                let customer_key =
-                    get_associated_token_address(customer_account.key, &item.currency);
-                let customer_ata =
-                    find_ata_in_accounts(&customer_key).ok_or(ErrorCode::OrderItemAtaMissing)?;
-                let (token_cashbox_key, _) = find_cashbox_pda();
-                let cashbox_ata = find_ata_in_accounts(&token_cashbox_key)
-                    .ok_or(ErrorCode::OrderItemAtaMissing)?;
-
-                match item.op {
-                    0 =>
-                    /* CREDIT_CUSTOMER */
-                    {
-                        Ok((cashbox_ata, customer_ata, cashbox_ata))
-                    }
-                    1 =>
-                    /* DEBIT_CUSTOMER */
-                    {
-                        Ok((customer_ata, cashbox_ata, &customer_account))
-                    }
-                    _ => err!(ErrorCode::OrderItemUnknownOperation),
-                }
-            }?;
             let amount = u64::try_from(item.amount).unwrap();
-            let cpi_ctx = CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
-                token::Transfer {
-                    from: from.to_account_info(),
-                    to: to.to_account_info(),
-                    authority: authority.to_account_info(),
-                },
-            );
-            token::transfer(cpi_ctx, amount)?;
-            // TODO - should we reload?
+            let customer_key = get_associated_token_address(customer_account.key, &item.currency);
+            let customer_ata =
+                find_ata_in_accounts(&customer_key).ok_or(ErrorCode::OrderItemAtaMissing)?;
+            let (token_cashbox_key, token_cashbox_bump) = find_cashbox_pda();
+            let cashbox_ata =
+                find_ata_in_accounts(&token_cashbox_key).ok_or(ErrorCode::OrderItemAtaMissing)?;
+
+            match item.op {
+                0 => {
+                    let seeds = &[
+                        ix_args.cash_register_id.as_bytes().as_ref(),
+                        item.currency.as_ref(),
+                        &[token_cashbox_bump],
+                    ];
+                    let signer = &[&seeds[..]];
+                    let cpi_ctx = CpiContext::new_with_signer(
+                        ctx.accounts.token_program.to_account_info(),
+                        token::Transfer {
+                            from: cashbox_ata.to_account_info(),
+                            to: customer_ata.to_account_info(),
+                            authority: cashbox_ata.to_account_info(),
+                        },
+                        signer,
+                    );
+                    // FIXME - create associated token account for customer if doesnt exist
+                    token::transfer(cpi_ctx, amount)?;
+                    Ok(())
+                    // TODO - should we reload?
+                }
+                1 => {
+                    let cpi_ctx = CpiContext::new(
+                        ctx.accounts.token_program.to_account_info(),
+                        token::Transfer {
+                            from: customer_ata.to_account_info(),
+                            to: cashbox_ata.to_account_info(),
+                            authority: customer_account.to_account_info(),
+                        },
+                    );
+                    token::transfer(cpi_ctx, amount)?;
+                    Ok(())
+                    // TODO - should we reload?
+                }
+                _ => err!(ErrorCode::OrderItemUnknownOperation),
+            }?;
         }
 
         Ok(())
@@ -137,7 +149,7 @@ pub mod kaching_cash_register {
         _ctx: Context<CreateTokenCashbox>,
         _ix_args: CreateTokenCashboxArgs,
     ) -> Result<()> {
-        // ctx.accounts.token_cashbox
+        // TODO - shold we validate that cashier really  
         Ok(())
     }
 }
