@@ -6,6 +6,7 @@ import {
 } from "../../utils/settle-payment";
 import { confirmTransaction, setupCurrency } from "../../utils/solana";
 import { shouldSucceed } from "../../utils/testing";
+import { createTokenCashbox } from "../../utils/token-cashbox";
 import { registerSettleOrderPaymentTest, SettlePaymentTestEnv } from "./runner";
 
 const MAXIMUM_ORDER_ITEMS_LENGTH = 13;
@@ -24,8 +25,14 @@ registerSettleOrderPaymentTest(
 
       const customerInitialBalance = 25;
 
+      const tokenCashbox = await createTokenCashbox({
+        currency,
+        cashier,
+        cashRegisterId,
+      });
+
       await Promise.all([
-        fundWallet(cashier.publicKey, 1),
+        fundWallet(tokenCashbox, 1),
         fundWallet(customer.publicKey, customerInitialBalance),
       ]);
 

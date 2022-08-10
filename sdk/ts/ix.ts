@@ -17,21 +17,27 @@ const SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID: PublicKey = new PublicKey(
   "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
 );
 
-async function findAssociatedTokenAddress(
+const findAssociatedTokenAddress = (
   walletAddress: PublicKey,
   tokenMintAddress: PublicKey
-): Promise<PublicKey> {
-  return (
-    await PublicKey.findProgramAddress(
-      [
-        walletAddress.toBuffer(),
-        TOKEN_PROGRAM_ID.toBuffer(),
-        tokenMintAddress.toBuffer(),
-      ],
-      SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
-    )
-  )[0];
-}
+) =>
+  PublicKey.findProgramAddress(
+    [
+      walletAddress.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      tokenMintAddress.toBuffer(),
+    ],
+    SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
+  );
+
+export const findTokenCashboxPDA = (
+  cashRegistedId: string,
+  tokenMint: PublicKey
+) =>
+  PublicKey.findProgramAddress(
+    [Buffer.from(cashRegistedId, "ascii"), tokenMint.toBytes()],
+    program.programId
+  );
 
 export type SettleOrderPaymentArgs = {
   cashRegister: PublicKey;
@@ -63,9 +69,9 @@ export const createSettlePaymentTransaction = async ({
   const orderItemsAccounts = (
     await Promise.all(
       orderItems.map(async (orderItem) => {
-        const [customerAta, cashierAta] = await Promise.all([
+        const [[customerAta], [tokenCashbox]] = await Promise.all([
           findAssociatedTokenAddress(customer.publicKey, orderItem.currency),
-          findAssociatedTokenAddress(signerPublicKey, orderItem.currency),
+          findTokenCashboxPDA(cashRegisterId, orderItem.currency),
         ]);
         return [
           {
@@ -74,7 +80,7 @@ export const createSettlePaymentTransaction = async ({
             isWritable: true,
           },
           {
-            pubkey: cashierAta,
+            pubkey: tokenCashbox,
             isSigner: false,
             isWritable: true,
           },

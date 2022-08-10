@@ -1,16 +1,22 @@
-import { OrderItemOperation } from "../../../sdk/ts";
+import { findTokenCashboxPDA, OrderItemOperation } from "../../../sdk/ts";
 import {
   mockCashierOrderService,
   anOrder,
   settleOrderPayment,
 } from "../../utils/settle-payment";
 import { confirmTransaction, setupCurrency } from "../../utils/solana";
+import { createTokenCashbox } from "../../utils/token-cashbox";
 import { registerSettleOrderPaymentTest } from "./runner";
 
 registerSettleOrderPaymentTest("should settle a payment", async (env) => {
   const { utils, fundWallet, currency } = await setupCurrency();
+  const tokenCashbox = await createTokenCashbox({
+    currency,
+    cashier: env.cashier,
+    cashRegisterId: env.cashRegisterId,
+  });
   await Promise.all([
-    fundWallet(env.cashier.publicKey, 2),
+    fundWallet(tokenCashbox, 2),
     fundWallet(env.customer.publicKey, 2),
   ]);
   const orderItems = [
@@ -45,14 +51,14 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
     console.info(error.logs);
     throw new Error(`expected tx to succeed, but error was thrown`);
   }
-  const [customerBalance, cashierBalance] = await Promise.all([
+  const [customerBalance, tokenCashboxBalance] = await Promise.all([
     utils.getMintBalanceForWallet(env.customer.publicKey),
-    utils.getMintBalanceForWallet(env.cashier.publicKey),
+    utils.getMintBalanceForWallet(tokenCashbox),
   ]);
   expect(customerBalance.toString()).toEqual(
     String(utils.calculateAmountInDecimals(1))
   );
-  expect(cashierBalance.toString()).toEqual(
+  expect(tokenCashboxBalance.toString()).toEqual(
     String(utils.calculateAmountInDecimals(3))
   );
 });

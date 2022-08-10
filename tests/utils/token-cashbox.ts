@@ -3,18 +3,10 @@ import * as anchor from "@project-serum/anchor";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
 import { confirmTransaction } from "./solana";
 import { findCashRegisterPDA } from "./cash-register";
+import { findTokenCashboxPDA } from "../../sdk/ts";
 
 const program = anchor.workspace
   .KachingCashRegister as anchor.Program<KachingCashRegister>;
-
-export const findTokenCashboxPDA = (
-  cashRegistedId: string,
-  tokenMint: PublicKey
-) =>
-  PublicKey.findProgramAddress(
-    [Buffer.from(cashRegistedId, "ascii"), tokenMint.toBytes()],
-    program.programId
-  );
 
 export const createTokenCashbox = async ({
   currency,
@@ -44,4 +36,6 @@ export const createTokenCashbox = async ({
     .rpc();
 
   await confirmTransaction(tx);
+
+  return tokenCashbox;
 };

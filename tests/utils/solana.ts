@@ -35,13 +35,15 @@ export const setupCurrency = async () => {
 
   await fundWalletWithSOL(payer.publicKey);
 
-  const getAta = (destination: PublicKey) =>
-    getOrCreateAssociatedTokenAccount(
-      localnetConnection,
-      payer,
-      mint,
-      destination
-    );
+  const resolveAssociatedTokenAccount = async (destination: PublicKey) =>
+    PublicKey.isOnCurve(destination)
+      ? getOrCreateAssociatedTokenAccount(
+          localnetConnection,
+          payer,
+          mint,
+          destination
+        ).then((ac) => ac.address)
+      : destination;
 
   const mint = await createMint(
     localnetConnection,
@@ -57,12 +59,12 @@ export const setupCurrency = async () => {
       if (!mint) {
         throw new Error(`you must `);
       }
-      const ata = await getAta(destination);
+      const ata = await resolveAssociatedTokenAccount(destination);
       await mintTo(
         localnetConnection,
         payer,
         mint,
-        ata.address,
+        ata,
         mintAuthority,
         calculateAmountInDecimals(amount),
         [],
@@ -73,11 +75,8 @@ export const setupCurrency = async () => {
       calculateAmountInDecimals,
       getMintInfo: () => getMint(localnetConnection, mint),
       getMintBalanceForWallet: async (wallet: PublicKey) => {
-        const ata = await getAta(wallet);
-        const tokenAccountInfo = await getAccount(
-          localnetConnection,
-          ata.address
-        );
+        const ata = await resolveAssociatedTokenAccount(wallet);
+        const tokenAccountInfo = await getAccount(localnetConnection, ata);
         return tokenAccountInfo.amount;
       },
     },

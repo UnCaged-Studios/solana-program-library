@@ -80,25 +80,40 @@ pub mod kaching_cash_register {
         }
 
         let mut order_items_atas = ctx.remaining_accounts.iter();
+        let customer_account = ctx.accounts.customer.to_account_info();
 
         for item in signed_order.items.iter() {
-            let mut find_ata = |wallet: &Pubkey| {
-                let ata_pubkey = get_associated_token_address(wallet, &item.currency);
-                order_items_atas.find(|ac| ac.key.eq(&ata_pubkey))
+            let mut find_ata_in_accounts =
+                |ata_pubkey: &Pubkey| order_items_atas.find(|ac| ac.key.eq(&ata_pubkey));
+            let find_cashbox_pda = || {
+                Pubkey::find_program_address(
+                    &[
+                        &ix_args.cash_register_id.as_bytes(),
+                        &item.currency.to_bytes(),
+                    ],
+                    ctx.program_id,
+                )
             };
             let (from, to, authority) = {
+                let customer_key =
+                    get_associated_token_address(customer_account.key, &item.currency);
                 let customer_ata =
-                    find_ata(ctx.accounts.customer.key).ok_or(ErrorCode::OrderItemAtaMissing)?;
-                // FIXME - use "token_cashbox": Account<'info, TokenAccount>
-                let cashier_ata = find_ata(&ctx.accounts.cash_register.cashier)
+                    find_ata_in_accounts(&customer_key).ok_or(ErrorCode::OrderItemAtaMissing)?;
+                let (token_cashbox_key, _) = find_cashbox_pda();
+                let cashbox_ata = find_ata_in_accounts(&token_cashbox_key)
                     .ok_or(ErrorCode::OrderItemAtaMissing)?;
+
                 match item.op {
-                    0 => Ok((cashier_ata, customer_ata, None)), // CREDIT_CUSTOMER
-                    1 => Ok((
-                        customer_ata,
-                        cashier_ata,
-                        Some(ctx.accounts.customer.to_account_info()),
-                    )), // DEBIT_CUSTOMER
+                    0 =>
+                    /* CREDIT_CUSTOMER */
+                    {
+                        Ok((cashbox_ata, customer_ata, cashbox_ata))
+                    }
+                    1 =>
+                    /* DEBIT_CUSTOMER */
+                    {
+                        Ok((customer_ata, cashbox_ata, &customer_account))
+                    }
                     _ => err!(ErrorCode::OrderItemUnknownOperation),
                 }
             }?;
@@ -108,19 +123,19 @@ pub mod kaching_cash_register {
                 token::Transfer {
                     from: from.to_account_info(),
                     to: to.to_account_info(),
-                    authority: authority.unwrap().to_account_info(),
+                    authority: authority.to_account_info(),
                 },
             );
             token::transfer(cpi_ctx, amount)?;
-            // (&mut ctx.accounts.token_vault).reload()?;
+            // TODO - should we reload?
         }
 
         Ok(())
     }
 
     pub fn create_token_cashbox(
-        ctx: Context<CreateTokenCashbox>,
-        ix_args: CreateTokenCashboxArgs,
+        _ctx: Context<CreateTokenCashbox>,
+        _ix_args: CreateTokenCashboxArgs,
     ) -> Result<()> {
         // ctx.accounts.token_cashbox
         Ok(())
