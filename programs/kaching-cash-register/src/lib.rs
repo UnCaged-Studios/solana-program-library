@@ -12,6 +12,7 @@ use anchor_lang::solana_program::sysvar::{
 use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use solana_program::account_info::AccountInfo;
 use spl_associated_token_account::get_associated_token_address;
+use bloomfilter::Bloom;
 
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
@@ -41,6 +42,26 @@ pub mod kaching_cash_register {
             return err!(ErrorCode::CashRegisterOrderSignersWhilelistOverflow);
         }
         ctx.accounts.cash_register.order_signers_whitelist = all_order_signers;
+
+        // initialize bloom
+        // TODO - if seed not being random is a security issue, get use Clock for random-ish seed
+        let seed = ctx.accounts.cash_register.key().to_bytes();
+        // items_count is an estimation of the maximum number of items to store.
+        let items_count = 2;
+        // fp_p is the wanted rate of false positives, in ]0.0, 1.0[
+        let fp_p = 0.01;
+        let mut bloom: Bloom<u8> = Bloom::new_for_fp_rate_with_seed(items_count, fp_p, &seed);
+        bloom.set(&7);
+        // serialize bloom
+        let sip_keys_raw = bloom.sip_keys();
+        let (sk1, sk2) = sip_keys_raw[0];
+        let (sk3, sk4) = sip_keys_raw[1];
+        ctx.accounts.cash_register.consumed_orders = BloomFilterModel {
+            bitmap_bits: bloom.number_of_bits(),
+            k_num: bloom.number_of_hash_functions(),
+            sip_keys: [sk1, sk2, sk3, sk4],
+            bytes: bloom.bitmap(),
+        };
 
         Ok(())
     }
@@ -81,6 +102,24 @@ pub mod kaching_cash_register {
 
         let mut order_items_atas = ctx.remaining_accounts.iter();
         let customer_account = ctx.accounts.customer.to_account_info();
+
+        // deserialize bloom
+        let model = &ctx.accounts.cash_register.consumed_orders;
+        let sip = [(model.sip_keys[0], model.sip_keys[1]), (model.sip_keys[2], model.sip_keys[3])];
+        let bloom: Bloom<u8> = Bloom::from_existing(
+            &model.bytes,
+            model.bitmap_bits,
+            model.k_num,
+            sip,
+        );
+
+        // local dev only
+        if false == bloom.check(&7) {
+            return err!(ErrorCode::OrderItemHasBeenConsumed);
+        }
+
+        // TODO - fix order_item.id type
+        // signed_order.items.iter().any(|order_item| { bloom.check(&order_item.id) });
 
         for item in signed_order.items.iter() {
             let mut find_ata_in_accounts =
@@ -162,6 +201,14 @@ pub mod kaching_cash_register {
     }
 }
 
+#[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
+pub struct BloomFilterModel {
+    bitmap_bits: u64,
+    k_num: u32,
+    sip_keys: [u64; 4], // is actually [(u64, u64), 2]
+    bytes: Vec<u8>
+}
+
 // create cash-regiser with initial configuration. If cash-regiser already exists (per given cash-regiser_id) the instruction will fail.
 #[account]
 pub struct CashRegister {
@@ -169,6 +216,7 @@ pub struct CashRegister {
     bump: u8,
     cashier: Pubkey,
     order_signers_whitelist: Vec<Pubkey>,
+    consumed_orders: BloomFilterModel
 }
 
 impl CashRegister {
@@ -176,6 +224,11 @@ impl CashRegister {
         1 // cash_regiser bump,
         + 32 // cashier public key
         + (32 * ORDER_SIGNERS_WHITELIST_LIMIT) // array of public keys
+        + 8 // bitmap_bits
+        + 4 // k_num
+        + (8 * 4) // sip_keys
+        // TODO - we need to think how to better allocate 
+        + 100 // bytes
         ;
 }
 
@@ -210,6 +263,15 @@ pub struct CreateCashRegister<'info> {
         bump
     )]
     pub cash_register: Account<'info, CashRegister>,
+
+    // #[account(
+    //     init,
+    //     payer = cashier,
+    //     space = 8 + BloomFilterModel::LEN,
+    //     seeds = [CASH_REGISTER_CONSUMED_ORDERS_SEED.as_ref(), ix_args.cash_register_id.as_bytes().as_ref()],
+    //     bump,
+    // )]
+    // pub consumed_orders: Account<'info, BloomFilterModel>,
 
     pub system_program: Program<'info, System>,
 }

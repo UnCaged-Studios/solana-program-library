@@ -21,3 +21,5 @@ solana-program = "1.10.31"
 anchor-spl = "0.25.0"
 spl-associated-token-account = "1.0.5"
 bs58 = "0.4.0"
+bloomfilter = "1.0.9"
+getrandom = { version = "0.2.2", features = ["custom"] }
