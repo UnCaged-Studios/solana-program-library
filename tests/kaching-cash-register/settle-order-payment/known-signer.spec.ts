@@ -4,18 +4,18 @@ import {
   settleOrderPayment,
 } from "../../utils/settle-payment";
 import { shouldSucceed } from "../../utils/testing";
-import { registerSettleOrderPaymentTest, SettlePaymentTestEnv } from "./runner";
+import { registerSettleOrderPaymentTest } from "./runner";
 
 registerSettleOrderPaymentTest(
   "should settle a payment if order signer is not cashier, but in whitelist",
-  shouldSucceed(
-    ({
-      cashRegisterId,
-      cashRegister,
-      knownOrderSigner,
-      customer,
-      cashRegisterBump,
-    }: SettlePaymentTestEnv) => {
+  ({
+    cashRegisterId,
+    cashRegister,
+    knownOrderSigner,
+    customer,
+    cashRegisterBump,
+  }) =>
+    shouldSucceed(() => {
       const { serializedOrder, signature } = mockCashierOrderService(
         knownOrderSigner,
         anOrder({
@@ -33,6 +33,5 @@ registerSettleOrderPaymentTest(
         customer,
         orderItems: [],
       });
-    }
-  )
+    })
 );

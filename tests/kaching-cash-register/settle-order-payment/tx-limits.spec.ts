@@ -12,20 +12,20 @@ import {
 } from "../../utils/solana";
 import { shouldSucceed } from "../../utils/testing";
 import { createTokenCashbox } from "../../utils/token-cashbox";
-import { registerSettleOrderPaymentTest, SettlePaymentTestEnv } from "./runner";
+import { registerSettleOrderPaymentTest } from "./runner";
 
 const MAXIMUM_ORDER_ITEMS_LENGTH = 13;
 
 registerSettleOrderPaymentTest(
   "should settle a payment with maximum ix size",
-  shouldSucceed(
-    async ({
-      cashRegisterId,
-      cashRegister,
-      cashier,
-      customer,
-      cashRegisterBump,
-    }: SettlePaymentTestEnv) => {
+  async ({
+    cashRegisterId,
+    cashRegister,
+    cashier,
+    customer,
+    cashRegisterBump,
+  }) =>
+    shouldSucceed(async () => {
       const { currency, fundWallet } = await setupCurrency();
 
       const customerInitialBalance = 25;
@@ -79,6 +79,5 @@ registerSettleOrderPaymentTest(
         customerInitialBalance - MAXIMUM_ORDER_ITEMS_LENGTH
       );
       expect(customerBalance.toString()).toEqual(String(expectedBalance));
-    }
-  )
+    })
 );

@@ -6,7 +6,11 @@ import {
   generateRandomCashRegisterId,
 } from "../utils/cash-register";
 import { fundWalletWithSOL, getConnection } from "../utils/solana";
-import { shouldFail, shouldSucceed } from "../utils/testing";
+import {
+  shouldFail,
+  createSuccessTestFn,
+  shouldSucceed,
+} from "../utils/testing";
 
 describe("create_cash_register instruction", () => {
   // Configure the client to use the local cluster.
@@ -16,13 +20,11 @@ describe("create_cash_register instruction", () => {
 
   beforeEach(() => fundWalletWithSOL(cashier.publicKey));
 
-  it(
-    "should create a cash register",
+  it("should create a cash register", () =>
     shouldSucceed(() => {
       const cashRegisterId = generateRandomCashRegisterId();
       return createCashRegister({ cashRegisterId }, cashier);
-    })
-  );
+    }));
 
   it("should fail to create a cashRegister if already exists", async () => {
     const cashRegisterId = generateRandomCashRegisterId();

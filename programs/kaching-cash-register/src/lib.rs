@@ -146,10 +146,18 @@ pub mod kaching_cash_register {
     }
 
     pub fn create_token_cashbox(
-        _ctx: Context<CreateTokenCashbox>,
+        ctx: Context<CreateTokenCashbox>,
         _ix_args: CreateTokenCashboxArgs,
     ) -> Result<()> {
-        // TODO - shold we validate that cashier really  
+        if false
+            == ctx
+                .accounts
+                .cashier
+                .key()
+                .eq(&ctx.accounts.cash_register.cashier.key())
+        {
+            return err!(ErrorCode::SignerIsNotCashRegisterAuthorized);
+        }
         Ok(())
     }
 }

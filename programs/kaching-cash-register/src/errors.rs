@@ -28,4 +28,7 @@ pub enum ErrorCode {
 
     #[msg("order item operation is unknown (not 0 or 1)")]
     OrderItemUnknownOperation,
+
+    #[msg("instruction signer does not match cash register owner")]
+    SignerIsNotCashRegisterAuthorized,
 }
