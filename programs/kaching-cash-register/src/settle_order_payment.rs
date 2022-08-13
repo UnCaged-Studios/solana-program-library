@@ -49,7 +49,7 @@ pub mod utils {
 
     #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Debug)]
     pub struct FullOrder {
-        pub id: u64,
+        pub id: u128,
         pub expiry: u32,
         pub customer: Pubkey,
         pub not_before: u32,

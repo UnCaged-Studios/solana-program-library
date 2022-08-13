@@ -1,5 +1,4 @@
-import { getAccount } from "@solana/spl-token";
-import { findTokenCashboxPDA, OrderItemOperation } from "../../../sdk/ts";
+import { OrderItemOperation } from "../../../sdk/ts";
 import {
   mockCashierOrderService,
   anOrder,

@@ -13,7 +13,7 @@ class OrderItemEncoderContainer {
 
 class OrderEncoderContainer {
   constructor(
-    public id: number,
+    public id: Uint8Array,
     public expiry: number,
     public customer: Uint8Array,
     public not_before: number,
@@ -53,6 +53,9 @@ const serializeOrderItems = (items: OrderModel["items"]) => {
     }, bufferLayout);
 };
 
+const encodeUUID = (str: string) =>
+  Uint8Array.from(Buffer.from(str.replace(/-/g, ""), "hex"));
+
 export const serializeOrder = (order: OrderModel) =>
   borsh.serialize(
     new Map([
@@ -61,7 +64,7 @@ export const serializeOrder = (order: OrderModel) =>
         {
           kind: "struct",
           fields: [
-            ["id", "u64"],
+            ["id", "u128"],
             ["expiry", "u32"],
             ["customer", [32]],
             ["not_before", "u32"],
@@ -73,7 +76,7 @@ export const serializeOrder = (order: OrderModel) =>
       ],
     ]),
     new OrderEncoderContainer(
-      order.id,
+      encodeUUID(order.id),
       order.expiry,
       order.customer.toBytes(),
       order.notBefore,
@@ -96,7 +99,7 @@ export type OrderItemModel = {
 };
 
 export type OrderModel = {
-  id: number;
+  id: string;
   expiry: number;
   customer: PublicKey;
   notBefore: number;

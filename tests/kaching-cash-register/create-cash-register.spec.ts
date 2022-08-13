@@ -6,11 +6,7 @@ import {
   generateRandomCashRegisterId,
 } from "../utils/cash-register";
 import { fundWalletWithSOL, getConnection } from "../utils/solana";
-import {
-  shouldFail,
-  createSuccessTestFn,
-  shouldSucceed,
-} from "../utils/testing";
+import { shouldFail, shouldSucceed } from "../utils/testing";
 
 describe("create_cash_register instruction", () => {
   // Configure the client to use the local cluster.

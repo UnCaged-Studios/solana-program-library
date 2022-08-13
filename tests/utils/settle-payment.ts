@@ -11,10 +11,16 @@ import { getConnection } from "./solana";
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
 
+const aUUID = () =>
+  "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (e) => {
+    var t = (16 * Math.random()) | 0;
+    return ("x" === e ? t : (3 & t) | 8).toString(16);
+  });
+
 export const anOrder = (
   input: Partial<OrderModel> & Pick<OrderModel, "cashRegisterId" | "customer">
 ) => ({
-  id: input.id || 100000,
+  id: input.id || aUUID(),
   customer: input.customer,
   cashRegisterId: input.cashRegisterId,
   expiry: input.expiry || Date.now() / 1000 + 1000, // 1000 seconds into the future
