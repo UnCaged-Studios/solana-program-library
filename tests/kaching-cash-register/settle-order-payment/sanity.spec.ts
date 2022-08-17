@@ -65,6 +65,7 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
       signerPublicKey: env.cashier.publicKey,
       customer: env.customer,
       orderItems,
+      consumedOrders: env.consumedOrders,
     });
     await confirmTransaction(tx);
   } catch (error) {

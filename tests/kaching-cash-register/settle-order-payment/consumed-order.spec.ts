@@ -1,4 +1,3 @@
-import { Keypair } from "@solana/web3.js";
 import {
   mockCashierOrderService,
   anOrder,
@@ -8,42 +7,47 @@ import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
 
 registerSettleOrderPaymentTest(
-  "should fail to settle a payment if order item associated-token-account is not passed",
+  "should fail to settle two orders with the same id",
   async ({
-    cashier,
-    cashRegister,
-    cashRegisterBump,
     cashRegisterId,
-    customer,
+    cashRegister,
     consumedOrders,
+    customer,
+    cashRegisterBump,
+    cashier,
   }) => {
-    const items = new Array(2).fill(0).map(() => ({
-      op: 1,
-      amount: 2,
-      currency: Keypair.generate().publicKey,
-    }));
     const { serializedOrder, signature } = mockCashierOrderService(
       cashier,
       anOrder({
         cashRegisterId,
         customer: customer.publicKey,
-        items,
       })
     );
+    await settleOrderPayment({
+      cashRegister: cashRegister,
+      cashRegisterId: cashRegisterId,
+      cashRegisterBump: cashRegisterBump,
+      serializedOrder,
+      signature,
+      signerPublicKey: cashier.publicKey,
+      customer,
+      orderItems: [],
+      consumedOrders,
+    });
     return shouldFail(
       () =>
         settleOrderPayment({
-          cashRegister,
-          cashRegisterId,
-          cashRegisterBump,
+          cashRegister: cashRegister,
+          cashRegisterId: cashRegisterId,
+          cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: cashier.publicKey,
           customer,
-          orderItems: items.slice(1),
+          orderItems: [],
           consumedOrders,
         }),
-      { code: "OrderItemAtaMissing", num: 6007 }
+      { code: "OrderHasBeenConsumed", num: 6011 }
     );
   }
 );

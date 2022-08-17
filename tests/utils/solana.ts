@@ -3,6 +3,10 @@ import {
   LAMPORTS_PER_SOL,
   Connection,
   Keypair,
+  sendAndConfirmTransaction,
+  Transaction,
+  TransactionInstruction,
+  Signer,
 } from "@solana/web3.js";
 import {
   createMint,
@@ -15,13 +19,9 @@ import {
 const localnetConnection = new Connection("http://127.0.0.1:8899");
 
 export const fundWalletWithSOL = async (wallet: PublicKey) => {
-  let balance = await localnetConnection.getBalance(wallet);
-  if (balance >= 0.1 * LAMPORTS_PER_SOL) {
-    return;
-  }
   const airdropSignature = await localnetConnection.requestAirdrop(
     wallet,
-    LAMPORTS_PER_SOL
+    LAMPORTS_PER_SOL * 12
   );
   await confirmTransaction(airdropSignature);
 };
@@ -93,3 +93,14 @@ export const getConnection = () => localnetConnection;
 
 export const confirmTransaction = (tx: string) =>
   localnetConnection.confirmTransaction(tx, "finalized");
+
+export const sendAndConfirmTx = (
+  ix: Transaction | TransactionInstruction,
+  signers: Array<Signer>
+) =>
+  sendAndConfirmTransaction(
+    localnetConnection,
+    new Transaction().add(ix),
+    signers,
+    { commitment: "finalized" }
+  );

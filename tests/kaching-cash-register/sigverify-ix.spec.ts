@@ -11,6 +11,7 @@ import {
   generateRandomCashRegisterId,
   findCashRegisterPDA,
   createCashRegister,
+  createConsumedOrdersAccount,
 } from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
@@ -44,6 +45,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       cashRegister: PublicKey;
       cashRegisterId: string;
       cashRegisterBump: number;
+      consumedOrders: PublicKey;
     }): typeof settlePayment =>
     async (overrides) => {
       const customer = Keypair.generate();
@@ -72,6 +74,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
         .accounts({
           cashRegister: cashRegisterModel.cashRegister,
           customer: customer.publicKey,
+          consumedOrders: cashRegisterModel.consumedOrders,
           instructionsSysvar:
             overrides.instructionsSysvar || SYSVAR_INSTRUCTIONS_PUBKEY,
         })
@@ -83,14 +86,17 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
   beforeEach(async () => {
     await fundWalletWithSOL(cashier.publicKey);
     const cashRegisterId = generateRandomCashRegisterId();
-    const [cashRegister, cashRegisterBump] = await findCashRegisterPDA(
-      cashRegisterId
-    );
-    await createCashRegister({ cashRegisterId }, cashier);
+    const [[cashRegister, cashRegisterBump], consumedOrders] =
+      await Promise.all([
+        findCashRegisterPDA(cashRegisterId),
+        createConsumedOrdersAccount(cashier, 898_600),
+      ]);
+    await createCashRegister({ cashRegisterId }, cashier, { consumedOrders });
     settlePayment = settlePaymentTestFunctionFactory({
       cashRegisterId,
       cashRegister,
       cashRegisterBump,
+      consumedOrders,
     });
   });
 
@@ -170,10 +176,5 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       () => settlePayment({ instructionsSysvar: SYSVAR_CLOCK_PUBKEY }),
       { code: "ConstraintAddress", num: 2012 }
     );
-  });
-
-  it("TODO", () => {
-    // https://github.com/solana-labs/solana/blob/9cf772092273c98fa35cd9a2f23d635f47eac6aa/web3.js/src/ed25519-program.ts#L57)
-    // create an Ed25519Program instruction with multiple signatures and try to bypass verification
   });
 });

@@ -2,6 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair } from "@solana/web3.js";
 import {
   createCashRegister,
+  createConsumedOrdersAccount,
   findCashRegisterPDA,
   generateRandomCashRegisterId,
 } from "../utils/cash-register";
@@ -24,11 +25,17 @@ describe("create_cash_register instruction", () => {
 
   it("should fail to create a cashRegister if already exists", async () => {
     const cashRegisterId = generateRandomCashRegisterId();
-    const [cashRegister] = await findCashRegisterPDA(cashRegisterId);
-    await createCashRegister({ cashRegisterId }, cashier);
+    const [[cashRegister], consumedOrders] = await Promise.all([
+      findCashRegisterPDA(cashRegisterId),
+      createConsumedOrdersAccount(cashier, 898_600),
+    ]);
+    const _create = () =>
+      createCashRegister({ cashRegisterId }, cashier, { consumedOrders });
+
+    await _create();
 
     return shouldFail(
-      () => createCashRegister({ cashRegisterId }, cashier),
+      () => _create(),
       `Allocate: account Address { address: ${cashRegister.toBase58()}, base: None } already in use`
     );
   });
@@ -51,13 +58,11 @@ describe("create_cash_register instruction", () => {
         keysOffset,
         remainsOffset
       );
-      const emptySpace = orderSignersWhitelistBuffer.subarray(remainsOffset);
       return {
         cashRegisterId: buff_cashRegisterId.toString("ascii"),
         bump,
         cashierPublicKey,
         pubkeys,
-        emptySpace,
       };
     };
 
@@ -109,7 +114,6 @@ describe("create_cash_register instruction", () => {
           cashier.publicKey.toBytes(),
         ])
       );
-      expect(accountData.emptySpace.every((b) => b === 0)).toBeTruthy();
     });
 
     it("should failt to create a cashRegister if order_signers_whitelist is bigger than 5", async () => {

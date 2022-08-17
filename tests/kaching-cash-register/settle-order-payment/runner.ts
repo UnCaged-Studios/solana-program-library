@@ -2,6 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   createCashRegister,
+  createConsumedOrdersAccount,
   findCashRegisterPDA,
   generateRandomCashRegisterId,
 } from "../../utils/cash-register";
@@ -14,6 +15,7 @@ export type SettlePaymentTestEnv = {
   cashRegister: PublicKey;
   cashRegisterId: string;
   cashRegisterBump: number;
+  consumedOrders: PublicKey;
 };
 
 export const registerSettleOrderPaymentTest = (
@@ -27,6 +29,8 @@ export const registerSettleOrderPaymentTest = (
   const knownOrderSigner = Keypair.generate();
 
   let cashRegister: PublicKey;
+  let consumedOrders: PublicKey;
+
   let cashRegisterId: string;
   let cashRegisterBump: number;
 
@@ -40,12 +44,14 @@ export const registerSettleOrderPaymentTest = (
     );
     cashRegister = _cashRegister;
     cashRegisterBump = _cashRegisterBump;
+    consumedOrders = await createConsumedOrdersAccount(cashier, 898_600);
     await createCashRegister(
       {
         cashRegisterId,
         orderSignersWhitelist: [knownOrderSigner.publicKey],
       },
-      cashier
+      cashier,
+      { consumedOrders }
     );
   });
 
@@ -62,6 +68,7 @@ export const registerSettleOrderPaymentTest = (
       cashRegisterId,
       cashRegisterBump,
       customer,
+      consumedOrders,
     })
   );
 };

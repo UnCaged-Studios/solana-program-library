@@ -12,7 +12,7 @@ registerSettleOrderPaymentTest(
   async ({
     cashRegisterId,
     cashRegister,
-    knownOrderSigner,
+    consumedOrders,
     customer,
     cashRegisterBump,
   }) => {
@@ -36,6 +36,7 @@ registerSettleOrderPaymentTest(
           signerPublicKey: evilCashier.publicKey,
           customer,
           orderItems: [],
+          consumedOrders,
         }),
       { code: "UnknownOrderSigner", num: 6002 }
     );

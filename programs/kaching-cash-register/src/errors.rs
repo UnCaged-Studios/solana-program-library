@@ -31,4 +31,10 @@ pub enum ErrorCode {
 
     #[msg("instruction signer does not match cash register owner")]
     SignerIsNotCashRegisterAuthorized,
+
+    #[msg("consumed_orders account does not match consumed_orders listed in cash register")]
+    ConsumedOrderAccountMismatch,
+
+    #[msg("order has been consumed already")]
+    OrderHasBeenConsumed,
 }

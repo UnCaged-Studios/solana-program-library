@@ -46,6 +46,7 @@ export type SettleOrderPaymentArgs = {
   serializedOrder: Uint8Array;
   signature: Uint8Array;
   signerPublicKey: PublicKey;
+  consumedOrders: PublicKey;
   customer: Keypair;
   orderItems: OrderModel["items"];
 };
@@ -59,6 +60,7 @@ export const createSettlePaymentTransaction = async ({
   signerPublicKey,
   customer,
   orderItems,
+  consumedOrders,
 }: SettleOrderPaymentArgs) => {
   const ixEd25519Program = Ed25519Program.createInstructionWithPublicKey({
     publicKey: signerPublicKey.toBytes(),
@@ -105,6 +107,7 @@ export const createSettlePaymentTransaction = async ({
       cashRegister,
       instructionsSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
       customer: customer.publicKey,
+      consumedOrders,
     })
     .remainingAccounts(orderItemsAccounts)
     .preInstructions([ixEd25519Program, computeBudgetIx].filter(Boolean))

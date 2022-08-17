@@ -14,6 +14,7 @@ registerSettleOrderPaymentTest(
     knownOrderSigner,
     customer,
     cashRegisterBump,
+    consumedOrders,
   }) =>
     shouldSucceed(() => {
       const { serializedOrder, signature } = mockCashierOrderService(
@@ -32,6 +33,7 @@ registerSettleOrderPaymentTest(
         signerPublicKey: knownOrderSigner.publicKey,
         customer,
         orderItems: [],
+        consumedOrders,
       });
     })
 );

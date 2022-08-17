@@ -2,6 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   createCashRegister,
+  createConsumedOrdersAccount,
   findCashRegisterPDA,
   generateRandomCashRegisterId,
 } from "../utils/cash-register";
@@ -21,6 +22,7 @@ describe("order validations", () => {
   const knownOrderSigner = Keypair.generate();
 
   let cashRegister: PublicKey;
+  let consumedOrders: PublicKey;
   let cashRegisterId: string;
   let cashRegisterBump: number;
 
@@ -34,12 +36,15 @@ describe("order validations", () => {
     );
     cashRegister = _cashRegister;
     cashRegisterBump = _cashRegisterBump;
+    consumedOrders = await createConsumedOrdersAccount(cashier, 898_600);
+
     return createCashRegister(
       {
         cashRegisterId,
         orderSignersWhitelist: [knownOrderSigner.publicKey],
       },
-      cashier
+      cashier,
+      { consumedOrders }
     );
   });
 
@@ -67,6 +72,7 @@ describe("order validations", () => {
           signerPublicKey: cashier.publicKey,
           customer,
           orderItems: [],
+          consumedOrders,
         }),
       { code: "OrderCashRegisterIdMismatch", num: 6003 }
     );
@@ -94,6 +100,7 @@ describe("order validations", () => {
           signerPublicKey: cashier.publicKey,
           customer: evilCustomer,
           orderItems: [],
+          consumedOrders,
         }),
       { code: "OrderCustomerMismatch", num: 6004 }
     );
@@ -119,6 +126,7 @@ describe("order validations", () => {
           signerPublicKey: cashier.publicKey,
           customer,
           orderItems: [],
+          consumedOrders,
         }),
       { code: "OrderExpired", num: 6005 }
     );
@@ -144,6 +152,7 @@ describe("order validations", () => {
           signerPublicKey: cashier.publicKey,
           customer,
           orderItems: [],
+          consumedOrders,
         }),
       { code: "OrderNotValidYet", num: 6006 }
     );

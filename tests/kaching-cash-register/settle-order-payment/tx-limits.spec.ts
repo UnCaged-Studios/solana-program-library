@@ -14,7 +14,7 @@ import { shouldSucceed } from "../../utils/testing";
 import { createTokenCashbox } from "../../utils/token-cashbox";
 import { registerSettleOrderPaymentTest } from "./runner";
 
-const MAXIMUM_ORDER_ITEMS_LENGTH = 13;
+const MAXIMUM_ORDER_ITEMS_LENGTH = 12;
 
 registerSettleOrderPaymentTest(
   "should settle a payment with maximum ix size",
@@ -24,6 +24,7 @@ registerSettleOrderPaymentTest(
     cashier,
     customer,
     cashRegisterBump,
+    consumedOrders,
   }) =>
     shouldSucceed(async () => {
       const { currency, fundWallet } = await setupCurrency();
@@ -67,6 +68,7 @@ registerSettleOrderPaymentTest(
         signerPublicKey: cashier.publicKey,
         customer,
         orderItems,
+        consumedOrders,
       });
 
       await confirmTransaction(tx);

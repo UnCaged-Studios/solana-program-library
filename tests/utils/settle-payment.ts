@@ -6,7 +6,7 @@ import {
   createSettlePaymentTransaction,
   SettleOrderPaymentArgs,
 } from "../../sdk/ts";
-import { getConnection } from "./solana";
+import { sendAndConfirmTx } from "./solana";
 
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
@@ -41,5 +41,5 @@ export const mockCashierOrderService = (
 export const settleOrderPayment = async (args: SettleOrderPaymentArgs) => {
   const tx = await createSettlePaymentTransaction(args);
   tx.feePayer = args.customer.publicKey;
-  return getConnection().sendTransaction(tx, [args.customer]);
+  return sendAndConfirmTx(tx, [args.customer]);
 };

@@ -1,7 +1,9 @@
+mod bloomfilter;
 mod create_cash_register;
 mod errors;
 mod settle_order_payment;
 
+use crate::bloomfilter::set_if_available;
 use crate::create_cash_register::utils as create_cash_register_utils;
 use crate::errors::ErrorCode;
 use crate::settle_order_payment::utils as settle_order_payment_utils;
@@ -42,6 +44,13 @@ pub mod kaching_cash_register {
         }
         ctx.accounts.cash_register.order_signers_whitelist = all_order_signers;
 
+        // TODO - this means we can connect whichever consumed_orders we want
+        ctx.accounts.cash_register.consumed_orders = ctx.accounts.consumed_orders.key();
+        let orders = &mut ctx.accounts.consumed_orders.load_init()?;
+        orders.k_num = ix_args.consumed_orders_init_k_num;
+        orders.bitmap_bits_num = ix_args.consumed_orders_init_bitmap_bits_num;
+        orders.sip_keys = ix_args.consumed_orders_init_sip_keys;
+
         Ok(())
     }
 
@@ -81,6 +90,30 @@ pub mod kaching_cash_register {
 
         let mut order_items_atas = ctx.remaining_accounts.iter();
         let customer_account = ctx.accounts.customer.to_account_info();
+
+        if false
+            == ctx.accounts.consumed_orders.key().eq(&ctx
+                .accounts
+                .cash_register
+                .consumed_orders
+                .key())
+        {
+            return err!(ErrorCode::ConsumedOrderAccountMismatch);
+        }
+
+        let mut consumed_orders = ctx.accounts.consumed_orders.load_mut()?;
+
+        if false
+            == set_if_available(
+                &signed_order.id,
+                consumed_orders.k_num,
+                consumed_orders.sip_keys,
+                consumed_orders.bitmap_bits_num,
+                &mut consumed_orders.bytes,
+            )
+        {
+            return err!(ErrorCode::OrderHasBeenConsumed);
+        }
 
         for item in signed_order.items.iter() {
             let mut find_ata_in_accounts =
@@ -169,6 +202,7 @@ pub struct CashRegister {
     bump: u8,
     cashier: Pubkey,
     order_signers_whitelist: Vec<Pubkey>,
+    consumed_orders: Pubkey,
 }
 
 impl CashRegister {
@@ -179,10 +213,21 @@ impl CashRegister {
         ;
 }
 
+#[account(zero_copy)]
+pub struct ConsumedOrders {
+    pub bytes: [u8; 898_600], // number_of_bits: 7_188_800 (898_600 bytes) => 500_000 items with 0.001 false-positive rate
+    pub k_num: u32,
+    pub bitmap_bits_num: u64,
+    pub sip_keys: [u64; 4],
+}
+
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
 pub struct CreateCashRegisterArgs {
     pub cash_register_id: String,
     pub order_signers_whitelist: Vec<Pubkey>,
+    pub consumed_orders_init_k_num: u32,
+    pub consumed_orders_init_bitmap_bits_num: u64,
+    pub consumed_orders_init_sip_keys: [u64; 4],
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
@@ -211,6 +256,9 @@ pub struct CreateCashRegister<'info> {
     )]
     pub cash_register: Account<'info, CashRegister>,
 
+    #[account(zero)]
+    pub consumed_orders: AccountLoader<'info, ConsumedOrders>,
+
     pub system_program: Program<'info, System>,
 }
 
@@ -226,6 +274,9 @@ pub struct SettleOrderPayment<'info> {
         bump = ix_args.cash_register_bump,
     )]
     pub cash_register: Account<'info, CashRegister>,
+
+    #[account(mut)]
+    pub consumed_orders: AccountLoader<'info, ConsumedOrders>,
 
     /// CHECK: This is not dangerous because we explicitly check the id
     #[account(address = instructions_sysvar_module::ID)]
