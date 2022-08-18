@@ -44,7 +44,6 @@ pub mod kaching_cash_register {
         }
         ctx.accounts.cash_register.order_signers_whitelist = all_order_signers;
 
-        // TODO - this means we can connect whichever consumed_orders we want
         ctx.accounts.cash_register.consumed_orders = ctx.accounts.consumed_orders.key();
         let orders = &mut ctx.accounts.consumed_orders.load_init()?;
         orders.k_num = ix_args.consumed_orders_init_k_num;

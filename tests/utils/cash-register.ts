@@ -22,7 +22,10 @@ const randomLowerCaseCharCode = () =>
 
 export const createConsumedOrdersAccount = async (
   from: Keypair,
-  sizeInBytes: number
+  sizeInBytes: number,
+  testOverrides: Partial<{
+    programId: PublicKey;
+  }> = {}
 ) => {
   const target = Keypair.generate();
   const sip_keys_size = 4 * 8; // [u64; 4]
@@ -40,7 +43,7 @@ export const createConsumedOrdersAccount = async (
       sip_keys_size +
       borsh_bytes_array_length_mark +
       sizeInBytes,
-    programId: program.programId,
+    programId: testOverrides.programId || program.programId,
   });
   await sendAndConfirmTx(ix, [from, target]);
   return target.publicKey;
@@ -105,5 +108,5 @@ export const createTestCashRegister = async (
   if (options.waitForTx) {
     await confirmTransaction(tx);
   }
-  return { cashRegisterId, cashRegister, cashRegisterBump };
+  return { cashRegisterId, cashRegister, cashRegisterBump, consumedOrders };
 };
