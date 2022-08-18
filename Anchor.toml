@@ -1,15 +1,25 @@
 [features]
 seeds = false
 skip-lint = false
-[programs.localnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "localnet"
-wallet = "/Users/tompere/.config/solana/id.json"
+wallet = "~/.config/solana/prog.json"
 
 [scripts]
 test = "yarn jest --testTimeout=180000"
+
+[programs.localnet]
+kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+
+[programs.devnet]
+kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+
+[programs.testnet]
+kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+
+[programs.mainnet]
+kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
