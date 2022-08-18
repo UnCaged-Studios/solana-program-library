@@ -18,9 +18,6 @@ import { KachingCashRegister } from "../../target/types/kaching_cash_register";
 import { shouldFail } from "../utils/testing";
 
 describe("settle_order_payment instruction with Ed25519 SigVerify pre-instruction", () => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
-
   const program = anchor.workspace
     .KachingCashRegister as anchor.Program<KachingCashRegister>;
 

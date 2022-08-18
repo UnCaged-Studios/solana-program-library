@@ -1,4 +1,3 @@
-import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   createTestCashRegister,
@@ -15,9 +14,6 @@ import { fundWalletWithSOL } from "../utils/solana";
 import { shouldFail } from "../utils/testing";
 
 describe("order validations", () => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
-
   const cashier = Keypair.generate();
   const knownOrderSigner = Keypair.generate();
 

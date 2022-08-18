@@ -22,9 +22,6 @@ export const registerSettleOrderPaymentTest = (
   testTitle: string,
   testFn: (env: SettlePaymentTestEnv) => Promise<any>
 ) => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
-
   const cashier = Keypair.generate();
   const knownOrderSigner = Keypair.generate();
 

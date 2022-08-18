@@ -16,9 +16,6 @@ export const registerCreateTokenCashboxTest = (
   testTitle: string,
   testFn: (env: CreateTokenCashboxEnv) => Promise<any>
 ) => {
-  // Configure the client to use the local cluster.
-  anchor.setProvider(anchor.AnchorProvider.env());
-
   const cashier = Keypair.generate();
   const cashRegisterId = generateRandomCashRegisterId();
 
