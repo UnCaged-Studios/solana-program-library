@@ -1,5 +1,5 @@
 import { Keypair } from "@solana/web3.js";
-import { createCashRegister } from "../../utils/cash-register";
+import { createTestCashRegister } from "../../utils/cash-register";
 import { getAccountInfo } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";
 
@@ -36,7 +36,7 @@ describe("cashRegister account data", () => {
   });
 
   it("should create a cashRegister with bump and cashier PublicKey in its data", async () => {
-    const { cashRegisterBump, cashRegister } = await createCashRegister(
+    const { cashRegisterBump, cashRegister } = await createTestCashRegister(
       {},
       cashier,
       {
@@ -53,7 +53,7 @@ describe("cashRegister account data", () => {
   it("should create a cashRegister with order_signers_whitelist in its data", async () => {
     const orderSigner1 = Keypair.generate().publicKey;
     const orderSigner2 = Keypair.generate().publicKey;
-    const { cashRegister } = await createCashRegister(
+    const { cashRegister } = await createTestCashRegister(
       {
         orderSignersWhitelist: [orderSigner1, orderSigner2],
       },
@@ -77,7 +77,7 @@ describe("cashRegister account data", () => {
   it("should failt to create a cashRegister if order_signers_whitelist is bigger than 5", () =>
     shouldFail(
       () =>
-        createCashRegister(
+        createTestCashRegister(
           {
             orderSignersWhitelist: new Array(5)
               .fill(0)

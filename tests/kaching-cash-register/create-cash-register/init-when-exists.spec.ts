@@ -1,7 +1,7 @@
 import { Keypair } from "@solana/web3.js";
 import {
   generateRandomCashRegisterId,
-  createCashRegister,
+  createTestCashRegister,
 } from "../../utils/cash-register";
 import { shouldFail } from "../../utils/testing";
 
@@ -9,7 +9,7 @@ test("should fail to create a cashRegister if already exists", async () => {
   const cashier = Keypair.generate();
   const cashRegisterId = generateRandomCashRegisterId();
 
-  const { cashRegister } = await createCashRegister(
+  const { cashRegister } = await createTestCashRegister(
     { cashRegisterId },
     cashier,
     {
@@ -18,7 +18,8 @@ test("should fail to create a cashRegister if already exists", async () => {
   );
 
   return shouldFail(
-    () => createCashRegister({ cashRegisterId }, cashier, { waitForTx: true }),
+    () =>
+      createTestCashRegister({ cashRegisterId }, cashier, { waitForTx: true }),
     `Allocate: account Address { address: ${cashRegister.toBase58()}, base: None } already in use`
   );
 });

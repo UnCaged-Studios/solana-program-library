@@ -59,7 +59,7 @@ export const findCashRegisterPDA = async (cashRegistedId: string) =>
     program.programId
   );
 
-export const createCashRegister = async (
+export const createTestCashRegister = async (
   {
     cashRegisterId = generateRandomCashRegisterId(),
     orderSignersWhitelist = [],

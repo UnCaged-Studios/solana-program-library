@@ -10,7 +10,7 @@ import { fundWalletWithSOL } from "../utils/solana";
 import {
   generateRandomCashRegisterId,
   findCashRegisterPDA,
-  createCashRegister,
+  createTestCashRegister,
   createConsumedOrdersAccount,
 } from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
@@ -91,7 +91,9 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
         findCashRegisterPDA(cashRegisterId),
         createConsumedOrdersAccount(cashier, 898_600),
       ]);
-    await createCashRegister({ cashRegisterId }, cashier, { consumedOrders });
+    await createTestCashRegister({ cashRegisterId }, cashier, {
+      consumedOrders,
+    });
     settlePayment = settlePaymentTestFunctionFactory({
       cashRegisterId,
       cashRegister,

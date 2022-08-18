@@ -1,7 +1,7 @@
 import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
-  createCashRegister,
+  createTestCashRegister,
   createConsumedOrdersAccount,
   findCashRegisterPDA,
   generateRandomCashRegisterId,
@@ -45,7 +45,7 @@ export const registerSettleOrderPaymentTest = (
     cashRegister = _cashRegister;
     cashRegisterBump = _cashRegisterBump;
     consumedOrders = await createConsumedOrdersAccount(cashier, 898_600);
-    await createCashRegister(
+    await createTestCashRegister(
       {
         cashRegisterId,
         orderSignersWhitelist: [knownOrderSigner.publicKey],
