@@ -89,10 +89,11 @@ export const getMintBalanceForWallet = async (
   return tokenAccountInfo.amount;
 };
 
-export const getConnection = () => localnetConnection;
-
 export const confirmTransaction = (tx: string) =>
   localnetConnection.confirmTransaction(tx, "finalized");
+
+export const getAccountInfo = (address: PublicKey) =>
+  localnetConnection.getAccountInfo(address);
 
 export const sendAndConfirmTx = (
   ix: Transaction | TransactionInstruction,

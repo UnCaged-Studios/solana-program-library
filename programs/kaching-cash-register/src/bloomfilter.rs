@@ -20,7 +20,7 @@ fn set(item: &u128, k_num: u32, sips: [SipHasher13; 2], bitmap_bits: u64, bytes:
         let bit_offset = (bloom_hash(&mut hashes, item, k_i, sips) % bitmap_bits) as usize;
         let byte_idx = bit_offset / 8;
         let bit_idx = bit_offset % 8;
-        let mask = u8::try_from(1 << (7 - bit_idx)).unwrap();
+        let mask: u8 = 1 << (7 - bit_idx);
         bytes[byte_idx] = bytes[byte_idx] | mask;
     }
 }

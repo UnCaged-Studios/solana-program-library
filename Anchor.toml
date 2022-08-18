@@ -12,4 +12,4 @@ cluster = "localnet"
 wallet = "/Users/tompere/.config/solana/id.json"
 
 [scripts]
-test = "yarn jest --testTimeout=120000"
+test = "yarn jest --testTimeout=180000"

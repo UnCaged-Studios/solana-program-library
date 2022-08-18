@@ -6,7 +6,11 @@ import {
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
 import { KachingCashRegister } from "../../target/types/kaching_cash_register";
-import { confirmTransaction, sendAndConfirmTx } from "./solana";
+import {
+  confirmTransaction,
+  fundWalletWithSOL,
+  sendAndConfirmTx,
+} from "./solana";
 
 const program = anchor.workspace
   .KachingCashRegister as anchor.Program<KachingCashRegister>;
@@ -57,9 +61,9 @@ export const findCashRegisterPDA = async (cashRegistedId: string) =>
 
 export const createCashRegister = async (
   {
-    cashRegisterId,
+    cashRegisterId = generateRandomCashRegisterId(),
     orderSignersWhitelist = [],
-  }: { cashRegisterId: string; orderSignersWhitelist?: Array<PublicKey> },
+  }: { cashRegisterId?: string; orderSignersWhitelist?: Array<PublicKey> },
   cashierWallet: anchor.web3.Keypair,
   options: {
     waitForTx?: boolean;
@@ -67,15 +71,8 @@ export const createCashRegister = async (
     consumedOrderSize?: number;
   } = {}
 ) => {
-  // await fundWalletWithSOL(cashier.publicKey);
-  // const cashRegisterId = generateRandomCashRegisterId();
-  // const [[cashRegister, cashRegisterBump], consumedOrders] =
-  //   await Promise.all([
-  //     findCashRegisterPDA(cashRegisterId),
-  //     createConsumedOrdersAccount(cashier, 898_600),
-  //   ]);
-  // await createCashRegister({ cashRegisterId }, cashier, { consumedOrders });
-  const [[cashRegister], consumedOrders] = await Promise.all([
+  await fundWalletWithSOL(cashierWallet.publicKey);
+  const [[cashRegister, cashRegisterBump], consumedOrders] = await Promise.all([
     findCashRegisterPDA(cashRegisterId),
     options.consumedOrders ||
       createConsumedOrdersAccount(
@@ -108,4 +105,5 @@ export const createCashRegister = async (
   if (options.waitForTx) {
     await confirmTransaction(tx);
   }
+  return { cashRegisterId, cashRegister, cashRegisterBump };
 };
