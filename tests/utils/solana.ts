@@ -23,7 +23,7 @@ export const fundWalletWithSOL = async (wallet: PublicKey) => {
     wallet,
     LAMPORTS_PER_SOL * 12
   );
-  await confirmTransaction(airdropSignature);
+  await localnetConnection.confirmTransaction(airdropSignature, "finalized");
 };
 
 const CURRENCY_DECIMALS = 6;
@@ -88,9 +88,6 @@ export const getMintBalanceForWallet = async (
   const tokenAccountInfo = await getAccount(localnetConnection, ata);
   return tokenAccountInfo.amount;
 };
-
-export const confirmTransaction = (tx: string) =>
-  localnetConnection.confirmTransaction(tx, "finalized");
 
 export const getAccountInfo = (address: PublicKey) =>
   localnetConnection.getAccountInfo(address);

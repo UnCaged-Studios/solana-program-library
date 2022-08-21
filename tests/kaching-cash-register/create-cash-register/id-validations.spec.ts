@@ -15,7 +15,7 @@ describe("cashRegister id validations", () => {
   it("should fail with proper error message", async () => {
     const id = generateRandomCashRegisterId();
     return shouldFail(
-      () => createTestCashRegister({ cashRegisterId: `#${id}` }, cashier),
+      () => createTestCashRegister(cashier, { cashRegisterId: `#${id}` }),
       {
         code: "CashRegisterIdInvalid",
         num: 6000,
@@ -37,7 +37,7 @@ describe("cashRegister id validations", () => {
           `${new Array(Math.ceil(50 / random.length) + 1).join(random)}`, // no length > 50
         ].map(
           (id) =>
-            createTestCashRegister({ cashRegisterId: id }, cashier)
+            createTestCashRegister(cashier, { cashRegisterId: id })
               .then(() => id) // if no error was thrown, it's a failure, return id
               .catch(() => undefined) // if error was thrown, it's success, return undefined
         )

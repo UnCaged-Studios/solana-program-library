@@ -9,17 +9,12 @@ test("should fail to create a cashRegister if already exists", async () => {
   const cashier = Keypair.generate();
   const cashRegisterId = generateRandomCashRegisterId();
 
-  const { cashRegister } = await createTestCashRegister(
-    { cashRegisterId },
-    cashier,
-    {
-      waitForTx: true,
-    }
-  );
+  const { cashRegister } = await createTestCashRegister(cashier, {
+    cashRegisterId,
+  });
 
   return shouldFail(
-    () =>
-      createTestCashRegister({ cashRegisterId }, cashier, { waitForTx: true }),
+    () => createTestCashRegister(cashier, { cashRegisterId }),
     `Allocate: account Address { address: ${cashRegister.toBase58()}, base: None } already in use`
   );
 });

@@ -56,6 +56,23 @@ const serializeOrderItems = (items: OrderModel["items"]) => {
 const encodeUUID = (str: string) =>
   Uint8Array.from(Buffer.from(str.replace(/-/g, ""), "hex"));
 
+// debit customer with 𝑛1 amount of mint X.
+type OrderItemModel = {
+  amount: number;
+  currency: PublicKey;
+  op: OrderItemOperation;
+};
+
+export type OrderModel = {
+  id: string;
+  expiry: number;
+  customer: PublicKey;
+  notBefore: number;
+  createdAt: number;
+  cashRegisterId: string;
+  items: Array<OrderItemModel>;
+};
+
 export const serializeOrder = (order: OrderModel) =>
   borsh.serialize(
     new Map([
@@ -90,20 +107,3 @@ export const enum OrderItemOperation {
   CREDIT_CUSTOMER = 0,
   DEBIT_CUSTOMER = 1,
 }
-
-// debit customer with 𝑛1 amount of mint X.
-export type OrderItemModel = {
-  amount: number;
-  currency: PublicKey;
-  op: OrderItemOperation;
-};
-
-export type OrderModel = {
-  id: string;
-  expiry: number;
-  customer: PublicKey;
-  notBefore: number;
-  createdAt: number;
-  cashRegisterId: string;
-  items: Array<OrderItemModel>;
-};

@@ -1,26 +1,18 @@
-import * as anchor from "@project-serum/anchor";
 import {
   Ed25519Program,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   SYSVAR_CLOCK_PUBKEY,
   Keypair,
   PublicKey,
+  TransactionInstruction,
 } from "@solana/web3.js";
-import { fundWalletWithSOL } from "../utils/solana";
-import {
-  generateRandomCashRegisterId,
-  findCashRegisterPDA,
-  createTestCashRegister,
-  createConsumedOrdersAccount,
-} from "../utils/cash-register";
+import { V1 } from "../../sdk/ts/v1";
+import { createTestCashRegister } from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
-import { KachingCashRegister } from "../../target/types/kaching_cash_register";
-import { shouldFail } from "../utils/testing";
+import { fundWalletWithSOL, sendAndConfirmTx } from "../utils/solana";
+import { shouldFail, shouldSucceed } from "../utils/testing";
 
 describe("settle_order_payment instruction with Ed25519 SigVerify pre-instruction", () => {
-  const program = anchor.workspace
-    .KachingCashRegister as anchor.Program<KachingCashRegister>;
-
   const cashier = Keypair.generate();
 
   let settlePayment: (
@@ -28,11 +20,9 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       serializedOrder: Buffer;
       signature: Uint8Array;
       signerPublicKey: PublicKey;
-      instructionsSysvar: anchor.Address;
+      instructionsSysvar: PublicKey;
       disableEd25519Ix: boolean;
-      mutateEd25519Ix: (
-        ix: anchor.web3.TransactionInstruction
-      ) => anchor.web3.TransactionInstruction;
+      mutateEd25519Ix: (ix: TransactionInstruction) => TransactionInstruction;
       instructionIndex: number;
     }>
   ) => Promise<void>;
@@ -46,6 +36,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
     }): typeof settlePayment =>
     async (overrides) => {
       const customer = Keypair.generate();
+      await fundWalletWithSOL(customer.publicKey);
       const { serializedOrder, signature } = mockCashierOrderService(
         cashier,
         anOrder({
@@ -53,7 +44,8 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
           customer: customer.publicKey,
         })
       );
-      const mutateEd25519Ix = overrides.mutateEd25519Ix || ((i: any) => i);
+      const mutateEd25519Ix =
+        overrides.mutateEd25519Ix || ((i: TransactionInstruction) => i);
       const ixEd25519Program = mutateEd25519Ix(
         Ed25519Program.createInstructionWithPublicKey({
           publicKey:
@@ -63,45 +55,55 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
           instructionIndex: overrides.instructionIndex,
         })
       );
-      await program.methods
-        .settleOrderPayment({
-          cashRegisterId: cashRegisterModel.cashRegisterId,
-          cashRegisterBump: cashRegisterModel.cashRegisterBump,
-        })
-        .accounts({
-          cashRegister: cashRegisterModel.cashRegister,
-          customer: customer.publicKey,
-          consumedOrders: cashRegisterModel.consumedOrders,
-          instructionsSysvar:
-            overrides.instructionsSysvar || SYSVAR_INSTRUCTIONS_PUBKEY,
-        })
-        .preInstructions(overrides.disableEd25519Ix ? [] : [ixEd25519Program])
-        .signers([customer])
-        .rpc();
+      const tx = await V1.customerSDK.SettleOrderPayment.createTx({
+        cashRegister: cashRegisterModel.cashRegister,
+        cashRegisterId: cashRegisterModel.cashRegisterId,
+        cashRegisterBump: cashRegisterModel.cashRegisterBump,
+        serializedOrder,
+        signature,
+        signerPublicKey: customer.publicKey,
+        customer: customer.publicKey,
+        orderItems: [],
+        consumedOrders: cashRegisterModel.consumedOrders,
+      });
+      tx.feePayer = customer.publicKey;
+      // Ed25519Program test overrides
+      if (overrides.instructionsSysvar) {
+        tx.instructions[1].keys.forEach((k, idx) => {
+          if (k.pubkey.equals(SYSVAR_INSTRUCTIONS_PUBKEY)) {
+            tx.instructions[1].keys[idx].pubkey = overrides.instructionsSysvar;
+          }
+        });
+      }
+      if (overrides.disableEd25519Ix) {
+        tx.instructions.shift();
+      } else {
+        tx.instructions[0] = ixEd25519Program;
+      }
+      await sendAndConfirmTx(tx, [customer]);
     };
 
-  beforeEach(async () => {
-    await fundWalletWithSOL(cashier.publicKey);
-    const cashRegisterId = generateRandomCashRegisterId();
-    const [[cashRegister, cashRegisterBump], consumedOrders] =
-      await Promise.all([
-        findCashRegisterPDA(cashRegisterId),
-        createConsumedOrdersAccount(cashier, 898_600),
-      ]);
-    await createTestCashRegister({ cashRegisterId }, cashier, {
-      consumedOrders,
-    });
+  beforeAll(async () => {
+    const { cashRegisterId, cashRegister, cashRegisterBump, consumedOrders } =
+      await createTestCashRegister(cashier, {});
     settlePayment = settlePaymentTestFunctionFactory({
       cashRegisterId,
-      cashRegister,
-      cashRegisterBump,
-      consumedOrders,
+      cashRegister: cashRegister,
+      cashRegisterBump: cashRegisterBump,
+      consumedOrders: consumedOrders,
     });
   });
 
-  it("sanity (happy flow)", async () => {
-    await settlePayment({});
-  });
+  // beforeEach(async () => {
+  //   settlePayment = settlePaymentTestFunctionFactory({
+  //     cashRegisterId,
+  //     cashRegister: cashRegister,
+  //     cashRegisterBump: cashRegisterBump,
+  //     consumedOrders: consumedOrders,
+  //   });
+  // });
+
+  it("sanity (happy flow)", () => shouldSucceed(() => settlePayment({})));
 
   it("should fail settle-order ix because number of signatures in ixEd25519Program is zero", async () => {
     return shouldFail(

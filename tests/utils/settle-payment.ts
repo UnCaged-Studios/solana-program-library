@@ -1,11 +1,8 @@
 import { Keypair } from "@solana/web3.js";
 import nacl from "tweetnacl";
-import {
-  OrderModel,
-  serializeOrder,
-  createSettlePaymentTransaction,
-  SettleOrderPaymentArgs,
-} from "../../sdk/ts";
+import { V1 } from "../../sdk/ts/v1";
+import { OrderModel } from "../../sdk/ts/v1/order-signer";
+import { SettleOrderPaymentParams } from "../../sdk/ts/v1/settle-order-payment";
 import { sendAndConfirmTx } from "./solana";
 
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
@@ -33,13 +30,24 @@ export const mockCashierOrderService = (
   cashier: Keypair,
   order: OrderModel
 ) => {
-  const serializedOrder = serializeOrder(order);
+  const serializedOrder = V1.orderSignerSDK.serializeOrder(order);
   const signature = signOrderPayload(serializedOrder, cashier);
   return { serializedOrder, signature };
 };
 
-export const settleOrderPayment = async (args: SettleOrderPaymentArgs) => {
-  const tx = await createSettlePaymentTransaction(args);
-  tx.feePayer = args.customer.publicKey;
-  return sendAndConfirmTx(tx, [args.customer]);
+type SettleTestOrderPaymentParams = Omit<
+  SettleOrderPaymentParams,
+  "customer"
+> & { customer: Keypair };
+
+export const settleOrderPayment = async (
+  params: SettleTestOrderPaymentParams
+) => {
+  const customer = params.customer;
+  const tx = await V1.customerSDK.SettleOrderPayment.createTx({
+    ...params,
+    customer: customer.publicKey,
+  });
+  tx.feePayer = customer.publicKey;
+  return sendAndConfirmTx(tx, [customer]);
 };

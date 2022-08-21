@@ -1,4 +1,3 @@
-import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
 import {
   createTestCashRegister,
@@ -7,7 +6,7 @@ import {
 import { fundWalletWithSOL, setupCurrency } from "../../utils/solana";
 
 export type CreateTokenCashboxEnv = {
-  cashier: anchor.web3.Keypair;
+  cashier: Keypair;
   currency: PublicKey;
   cashRegisterId: string;
 };
@@ -24,9 +23,7 @@ export const registerCreateTokenCashboxTest = (
   beforeAll(() => fundWalletWithSOL(cashier.publicKey));
 
   beforeEach(async () => {
-    await createTestCashRegister({ cashRegisterId }, cashier, {
-      waitForTx: true,
-    });
+    await createTestCashRegister(cashier, { cashRegisterId });
     const modl = await setupCurrency();
     currency = modl.currency;
   });

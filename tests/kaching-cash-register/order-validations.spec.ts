@@ -1,10 +1,5 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
-import {
-  createTestCashRegister,
-  createConsumedOrdersAccount,
-  findCashRegisterPDA,
-  generateRandomCashRegisterId,
-} from "../utils/cash-register";
+import { createTestCashRegister } from "../utils/cash-register";
 import {
   anOrder,
   mockCashierOrderService,
@@ -17,31 +12,21 @@ describe("order validations", () => {
   const cashier = Keypair.generate();
   const knownOrderSigner = Keypair.generate();
 
+  let cashRegisterId: string;
   let cashRegister: PublicKey;
   let consumedOrders: PublicKey;
-  let cashRegisterId: string;
   let cashRegisterBump: number;
 
   let customer: Keypair;
 
   beforeAll(async () => {
-    await fundWalletWithSOL(cashier.publicKey);
-    cashRegisterId = generateRandomCashRegisterId();
-    const [_cashRegister, _cashRegisterBump] = await findCashRegisterPDA(
-      cashRegisterId
-    );
-    cashRegister = _cashRegister;
-    cashRegisterBump = _cashRegisterBump;
-    consumedOrders = await createConsumedOrdersAccount(cashier, 898_600);
-
-    return createTestCashRegister(
-      {
-        cashRegisterId,
-        orderSignersWhitelist: [knownOrderSigner.publicKey],
-      },
-      cashier,
-      { consumedOrders }
-    );
+    const res = await createTestCashRegister(cashier, {
+      orderSignersWhitelist: [knownOrderSigner.publicKey],
+    });
+    cashRegister = res.cashRegister;
+    cashRegisterId = res.cashRegisterId;
+    consumedOrders = res.consumedOrders;
+    cashRegisterBump = res.cashRegisterBump;
   });
 
   beforeEach(async () => {

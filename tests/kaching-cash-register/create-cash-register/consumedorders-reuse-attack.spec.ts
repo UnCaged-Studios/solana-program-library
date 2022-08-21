@@ -6,10 +6,10 @@ test("should fail when consumedOrders account has already been initialized", () 
   shouldFail(
     async () => {
       const { consumedOrders } = await createTestCashRegister(
-        {},
-        Keypair.generate()
+        Keypair.generate(),
+        {}
       );
-      return createTestCashRegister({}, Keypair.generate(), { consumedOrders });
+      return createTestCashRegister(Keypair.generate(), { consumedOrders });
     },
     {
       num: 2013,

@@ -1,14 +1,14 @@
 import * as anchor from "@project-serum/anchor";
+import { KachingCashRegister } from "../../../target/types/kaching_cash_register";
 import {
   Ed25519Program,
-  Keypair,
   PublicKey,
   SYSVAR_INSTRUCTIONS_PUBKEY,
   ComputeBudgetProgram,
 } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { KachingCashRegister } from "../../target/types/kaching_cash_register";
-import { OrderModel } from "./serializer";
+import { OrderModel } from "./order-signer";
+import { findTokenCashboxPDA } from "./create-token-cashbox";
 
 const program = anchor.workspace
   .KachingCashRegister as anchor.Program<KachingCashRegister>;
@@ -30,16 +30,7 @@ const findAssociatedTokenAddress = (
     SPL_ASSOCIATED_TOKEN_ACCOUNT_PROGRAM_ID
   );
 
-export const findTokenCashboxPDA = (
-  cashRegistedId: string,
-  tokenMint: PublicKey
-) =>
-  PublicKey.findProgramAddress(
-    [Buffer.from(cashRegistedId, "ascii"), tokenMint.toBytes()],
-    program.programId
-  );
-
-export type SettleOrderPaymentArgs = {
+export type SettleOrderPaymentParams = {
   cashRegister: PublicKey;
   cashRegisterId: string;
   cashRegisterBump: number;
@@ -47,11 +38,11 @@ export type SettleOrderPaymentArgs = {
   signature: Uint8Array;
   signerPublicKey: PublicKey;
   consumedOrders: PublicKey;
-  customer: Keypair;
+  customer: PublicKey;
   orderItems: OrderModel["items"];
 };
 
-export const createSettlePaymentTransaction = async ({
+export const createTx = async ({
   cashRegister,
   cashRegisterId,
   cashRegisterBump,
@@ -61,7 +52,7 @@ export const createSettlePaymentTransaction = async ({
   customer,
   orderItems,
   consumedOrders,
-}: SettleOrderPaymentArgs) => {
+}: SettleOrderPaymentParams) => {
   const ixEd25519Program = Ed25519Program.createInstructionWithPublicKey({
     publicKey: signerPublicKey.toBytes(),
     signature,
@@ -72,7 +63,7 @@ export const createSettlePaymentTransaction = async ({
     await Promise.all(
       orderItems.map(async (orderItem) => {
         const [[customerAta], [tokenCashbox]] = await Promise.all([
-          findAssociatedTokenAddress(customer.publicKey, orderItem.currency),
+          findAssociatedTokenAddress(customer, orderItem.currency),
           findTokenCashboxPDA(cashRegisterId, orderItem.currency),
         ]);
         return [
@@ -106,7 +97,7 @@ export const createSettlePaymentTransaction = async ({
     .accounts({
       cashRegister,
       instructionsSysvar: SYSVAR_INSTRUCTIONS_PUBKEY,
-      customer: customer.publicKey,
+      customer,
       consumedOrders,
     })
     .remainingAccounts(orderItemsAccounts)

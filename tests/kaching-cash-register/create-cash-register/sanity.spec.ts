@@ -3,4 +3,4 @@ import { createTestCashRegister } from "../../utils/cash-register";
 import { shouldSucceed } from "../../utils/testing";
 
 test("should create a cash register", () =>
-  shouldSucceed(() => createTestCashRegister({}, Keypair.generate())));
+  shouldSucceed(() => createTestCashRegister(Keypair.generate(), {})));

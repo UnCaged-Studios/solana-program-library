@@ -1,9 +1,12 @@
-import { Keypair, PublicKey, SystemProgram } from "@solana/web3.js";
 import {
-  createConsumedOrdersAccount,
-  createTestCashRegister,
-} from "../../utils/cash-register";
-import { fundWalletWithSOL } from "../../utils/solana";
+  Keypair,
+  PublicKey,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
+import { V1 } from "../../../sdk/ts/v1";
+import { createTestCashRegister } from "../../utils/cash-register";
+import { fundWalletWithSOL, sendAndConfirmTx } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";
 
 const withDifferentOwner = (programId: PublicKey) =>
@@ -11,13 +14,23 @@ const withDifferentOwner = (programId: PublicKey) =>
     async () => {
       const evilCashier = Keypair.generate();
       await fundWalletWithSOL(evilCashier.publicKey);
-      const consumedOrders = await createConsumedOrdersAccount(
+      const {
+        createAccountParams: { space },
+      } = V1.adminSDK.CreateConsumedOrdersAccount.createParams();
+      const consumedOrdersAccount = Keypair.generate();
+      const createConsumedOrdersTx = SystemProgram.createAccount({
+        fromPubkey: evilCashier.publicKey,
+        newAccountPubkey: consumedOrdersAccount.publicKey,
+        lamports: LAMPORTS_PER_SOL * 10,
+        space,
+        programId,
+      });
+      await sendAndConfirmTx(createConsumedOrdersTx, [
         evilCashier,
-        898_600,
-        { programId }
-      );
-      return createTestCashRegister({}, evilCashier, {
-        consumedOrders,
+        consumedOrdersAccount,
+      ]);
+      return createTestCashRegister(evilCashier, {
+        consumedOrders: consumedOrdersAccount.publicKey,
       });
     },
     {

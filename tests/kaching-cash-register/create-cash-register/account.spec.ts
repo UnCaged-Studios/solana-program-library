@@ -37,11 +37,8 @@ describe("cashRegister account data", () => {
 
   it("should create a cashRegister with bump and cashier PublicKey in its data", async () => {
     const { cashRegisterBump, cashRegister } = await createTestCashRegister(
-      {},
       cashier,
-      {
-        waitForTx: true,
-      }
+      {}
     );
     const { data } = await getAccountInfo(cashRegister);
     const accountData = deserialize(data);
@@ -53,15 +50,9 @@ describe("cashRegister account data", () => {
   it("should create a cashRegister with order_signers_whitelist in its data", async () => {
     const orderSigner1 = Keypair.generate().publicKey;
     const orderSigner2 = Keypair.generate().publicKey;
-    const { cashRegister } = await createTestCashRegister(
-      {
-        orderSignersWhitelist: [orderSigner1, orderSigner2],
-      },
-      cashier,
-      {
-        waitForTx: true,
-      }
-    );
+    const { cashRegister } = await createTestCashRegister(cashier, {
+      orderSignersWhitelist: [orderSigner1, orderSigner2],
+    });
     const { data } = await getAccountInfo(cashRegister);
     const accountData = deserialize(data);
 
@@ -77,17 +68,11 @@ describe("cashRegister account data", () => {
   it("should failt to create a cashRegister if order_signers_whitelist is bigger than 5", () =>
     shouldFail(
       () =>
-        createTestCashRegister(
-          {
-            orderSignersWhitelist: new Array(5)
-              .fill(0)
-              .map(() => Keypair.generate().publicKey),
-          },
-          cashier,
-          {
-            waitForTx: true,
-          }
-        ),
+        createTestCashRegister(cashier, {
+          orderSignersWhitelist: new Array(5)
+            .fill(0)
+            .map(() => Keypair.generate().publicKey),
+        }),
       { code: "CashRegisterOrderSignersWhilelistOverflow", num: 6001 }
     ));
 });

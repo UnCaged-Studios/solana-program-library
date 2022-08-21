@@ -1,4 +1,4 @@
-import { OrderItemOperation } from "../../../sdk/ts";
+import { V1 } from "../../../sdk/ts/v1";
 import {
   mockCashierOrderService,
   anOrder,
@@ -6,7 +6,6 @@ import {
 } from "../../utils/settle-payment";
 import {
   calculateAmountInDecimals,
-  confirmTransaction,
   getMintBalanceForWallet,
   setupCurrency,
 } from "../../utils/solana";
@@ -31,7 +30,7 @@ registerSettleOrderPaymentTest(
 
       const customerInitialBalance = 25;
 
-      const tokenCashbox = await createTokenCashbox({
+      const [tokenCashbox] = await createTokenCashbox({
         currency,
         cashier,
         cashRegisterId,
@@ -45,7 +44,7 @@ registerSettleOrderPaymentTest(
       const orderItems = new Array(MAXIMUM_ORDER_ITEMS_LENGTH)
         .fill(0)
         .map(() => ({
-          op: OrderItemOperation.DEBIT_CUSTOMER,
+          op: V1.orderSignerSDK.OrderItemOperation.DEBIT_CUSTOMER,
           amount: calculateAmountInDecimals(1),
           currency,
         }));
@@ -59,7 +58,7 @@ registerSettleOrderPaymentTest(
         })
       );
 
-      const tx = await settleOrderPayment({
+      await settleOrderPayment({
         cashRegister: cashRegister,
         cashRegisterId: cashRegisterId,
         cashRegisterBump: cashRegisterBump,
@@ -70,8 +69,6 @@ registerSettleOrderPaymentTest(
         orderItems,
         consumedOrders,
       });
-
-      await confirmTransaction(tx);
 
       const customerBalance = await getMintBalanceForWallet(
         customer.publicKey,

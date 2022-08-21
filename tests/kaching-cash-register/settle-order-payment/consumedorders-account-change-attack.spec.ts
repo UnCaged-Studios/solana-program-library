@@ -1,10 +1,11 @@
 import { Keypair } from "@solana/web3.js";
-import { createConsumedOrdersAccount } from "../../utils/cash-register";
+import { createConsumedOrdersTestAccount } from "../../utils/cash-register";
 import {
   mockCashierOrderService,
   anOrder,
   settleOrderPayment,
 } from "../../utils/settle-payment";
+import { V1 } from "../../../sdk/ts/v1";
 import { fundWalletWithSOL } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
@@ -14,9 +15,11 @@ registerSettleOrderPaymentTest(
   async (env) => {
     const evilCashier = Keypair.generate();
     await fundWalletWithSOL(evilCashier.publicKey);
-    const evilConsumedOrders = await createConsumedOrdersAccount(
+    const { createAccountParams } =
+      V1.adminSDK.CreateConsumedOrdersAccount.createParams();
+    const evilConsumedOrders = await createConsumedOrdersTestAccount(
       evilCashier,
-      898_600
+      createAccountParams
     );
     const { serializedOrder, signature } = mockCashierOrderService(
       env.cashier,

@@ -1,4 +1,4 @@
-import { OrderItemOperation } from "../../../sdk/ts";
+import { V1 } from "../../../sdk/ts/v1";
 import {
   mockCashierOrderService,
   anOrder,
@@ -6,7 +6,6 @@ import {
 } from "../../utils/settle-payment";
 import {
   calculateAmountInDecimals,
-  confirmTransaction,
   getMintBalanceForWallet,
   setupCurrency,
 } from "../../utils/solana";
@@ -19,7 +18,7 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
     { fundWallet: fundWalletWithC2, currency: c2 },
   ] = await Promise.all([setupCurrency(), setupCurrency()]);
 
-  const [_cashbox1, cashbox2] = await Promise.all(
+  const [_cashbox1, [cashbox2]] = await Promise.all(
     [c1, c2].map((c) =>
       createTokenCashbox({
         currency: c,
@@ -38,12 +37,12 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
     {
       amount: calculateAmountInDecimals(2),
       currency: c1,
-      op: OrderItemOperation.DEBIT_CUSTOMER,
+      op: V1.orderSignerSDK.OrderItemOperation.DEBIT_CUSTOMER,
     },
     {
       amount: calculateAmountInDecimals(1),
       currency: c2,
-      op: OrderItemOperation.CREDIT_CUSTOMER,
+      op: V1.orderSignerSDK.OrderItemOperation.CREDIT_CUSTOMER,
     },
   ];
   const { serializedOrder, signature } = mockCashierOrderService(
@@ -56,7 +55,7 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
   );
 
   try {
-    const tx = await settleOrderPayment({
+    await settleOrderPayment({
       cashRegister: env.cashRegister,
       cashRegisterId: env.cashRegisterId,
       cashRegisterBump: env.cashRegisterBump,
@@ -67,7 +66,6 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
       orderItems,
       consumedOrders: env.consumedOrders,
     });
-    await confirmTransaction(tx);
   } catch (error) {
     if (error.logs) {
       console.info(error.logs);

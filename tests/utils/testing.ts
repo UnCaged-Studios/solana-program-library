@@ -16,7 +16,7 @@ export const shouldFail = async (
         : `Error Code: ${expectedError.code}. Error Number: ${expectedError.num}`;
     const pred =
       error.message.includes(sbstr) ||
-      error.logs.some((lg) => lg.includes(sbstr));
+      error.logs?.some((lg) => lg.includes(sbstr));
     if (pred) {
       // test success
       return;

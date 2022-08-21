@@ -1,16 +1,10 @@
-import * as anchor from "@project-serum/anchor";
 import { Keypair, PublicKey } from "@solana/web3.js";
-import {
-  createTestCashRegister,
-  createConsumedOrdersAccount,
-  findCashRegisterPDA,
-  generateRandomCashRegisterId,
-} from "../../utils/cash-register";
+import { createTestCashRegister } from "../../utils/cash-register";
 import { fundWalletWithSOL } from "../../utils/solana";
 
 export type SettlePaymentTestEnv = {
-  cashier: anchor.web3.Keypair;
-  knownOrderSigner: anchor.web3.Keypair;
+  cashier: Keypair;
+  knownOrderSigner: Keypair;
   customer: Keypair;
   cashRegister: PublicKey;
   cashRegisterId: string;
@@ -24,41 +18,20 @@ export const registerSettleOrderPaymentTest = (
 ) => {
   const cashier = Keypair.generate();
   const knownOrderSigner = Keypair.generate();
+  const customer = Keypair.generate();
 
-  let cashRegister: PublicKey;
-  let consumedOrders: PublicKey;
-
-  let cashRegisterId: string;
-  let cashRegisterBump: number;
-
-  let customer: Keypair;
-
-  beforeAll(async () => {
-    await fundWalletWithSOL(cashier.publicKey);
-    cashRegisterId = generateRandomCashRegisterId();
-    const [_cashRegister, _cashRegisterBump] = await findCashRegisterPDA(
-      cashRegisterId
-    );
-    cashRegister = _cashRegister;
-    cashRegisterBump = _cashRegisterBump;
-    consumedOrders = await createConsumedOrdersAccount(cashier, 898_600);
-    await createTestCashRegister(
-      {
-        cashRegisterId,
+  it(testTitle, async () => {
+    const [
+      ,
+      { cashRegister, cashRegisterId, cashRegisterBump, consumedOrders },
+    ] = await Promise.all([
+      fundWalletWithSOL(customer.publicKey),
+      createTestCashRegister(cashier, {
         orderSignersWhitelist: [knownOrderSigner.publicKey],
-      },
-      cashier,
-      { consumedOrders }
-    );
-  });
+      }),
+    ]);
 
-  beforeEach(async () => {
-    customer = Keypair.generate();
-    await fundWalletWithSOL(customer.publicKey);
-  });
-
-  it(testTitle, () =>
-    testFn({
+    return testFn({
       cashier,
       knownOrderSigner,
       cashRegister,
@@ -66,6 +39,6 @@ export const registerSettleOrderPaymentTest = (
       cashRegisterBump,
       customer,
       consumedOrders,
-    })
-  );
+    });
+  });
 };
