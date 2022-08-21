@@ -21,15 +21,13 @@ export const registerSettleOrderPaymentTest = (
   const customer = Keypair.generate();
 
   it(testTitle, async () => {
-    const [
-      ,
-      { cashRegister, cashRegisterId, cashRegisterBump, consumedOrders },
-    ] = await Promise.all([
-      fundWalletWithSOL(customer.publicKey),
-      createTestCashRegister(cashier, {
-        orderSignersWhitelist: [knownOrderSigner.publicKey],
-      }),
-    ]);
+    const [{ cashRegister, cashRegisterId, cashRegisterBump, consumedOrders }] =
+      await Promise.all([
+        createTestCashRegister(cashier, {
+          orderSignersWhitelist: [knownOrderSigner.publicKey],
+        }),
+        fundWalletWithSOL(customer.publicKey),
+      ]);
 
     return testFn({
       cashier,

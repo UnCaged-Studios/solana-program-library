@@ -27,11 +27,11 @@ export const anOrder = (
 });
 
 export const mockCashierOrderService = (
-  cashier: Keypair,
+  orderSigner: Keypair,
   order: OrderModel
 ) => {
   const serializedOrder = V1.orderSignerSDK.serializeOrder(order);
-  const signature = signOrderPayload(serializedOrder, cashier);
+  const signature = signOrderPayload(serializedOrder, orderSigner);
   return { serializedOrder, signature };
 };
 
@@ -40,7 +40,7 @@ type SettleTestOrderPaymentParams = Omit<
   "customer"
 > & { customer: Keypair };
 
-export const settleOrderPayment = async (
+export const settleOrderPaymentTest = async (
   params: SettleTestOrderPaymentParams
 ) => {
   const customer = params.customer;

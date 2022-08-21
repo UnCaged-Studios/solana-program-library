@@ -2,7 +2,7 @@ import { V1 } from "../../../sdk/ts/v1";
 import {
   mockCashierOrderService,
   anOrder,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../../utils/settle-payment";
 import {
   calculateAmountInDecimals,
@@ -24,6 +24,7 @@ registerSettleOrderPaymentTest(
     customer,
     cashRegisterBump,
     consumedOrders,
+    knownOrderSigner,
   }) =>
     shouldSucceed(async () => {
       const { currency, fundWallet } = await setupCurrency();
@@ -50,7 +51,7 @@ registerSettleOrderPaymentTest(
         }));
 
       const { serializedOrder, signature } = mockCashierOrderService(
-        cashier,
+        knownOrderSigner,
         anOrder({
           cashRegisterId,
           customer: customer.publicKey,
@@ -58,13 +59,13 @@ registerSettleOrderPaymentTest(
         })
       );
 
-      await settleOrderPayment({
+      await settleOrderPaymentTest({
         cashRegister: cashRegister,
         cashRegisterId: cashRegisterId,
         cashRegisterBump: cashRegisterBump,
         serializedOrder,
         signature,
-        signerPublicKey: cashier.publicKey,
+        signerPublicKey: knownOrderSigner.publicKey,
         customer,
         orderItems,
         consumedOrders,

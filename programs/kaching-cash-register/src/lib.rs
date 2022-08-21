@@ -37,8 +37,7 @@ pub mod kaching_cash_register {
         ctx.accounts.cash_register.bump = *ctx.bumps.get("cash_register").unwrap();
         ctx.accounts.cash_register.cashier = *ctx.accounts.cashier.to_account_info().key;
 
-        let mut all_order_signers = Vec::from(ix_args.order_signers_whitelist);
-        all_order_signers.push(ctx.accounts.cash_register.cashier);
+        let all_order_signers = Vec::from(ix_args.order_signers_whitelist);
         if all_order_signers.len() > ORDER_SIGNERS_WHITELIST_LIMIT {
             return err!(ErrorCode::CashRegisterOrderSignersWhilelistOverflow);
         }
@@ -192,6 +191,40 @@ pub mod kaching_cash_register {
         }
         Ok(())
     }
+
+    pub fn update_order_signers_whitelist(
+        ctx: Context<UpdateOrderSignersWhitelist>,
+        ix_args: UpdateOrderSignersWhitelistArgs,
+    ) -> Result<()> {
+        if false
+            == ctx
+                .accounts
+                .cashier
+                .key()
+                .eq(&ctx.accounts.cash_register.cashier.key())
+        {
+            return err!(ErrorCode::SignerIsNotCashRegisterAuthorized);
+        }
+        if ix_args.mode == OrderSignersUpdateType::OVERRIDE {
+            ctx.accounts.cash_register.order_signers_whitelist = ix_args.order_signers_whitelist;
+            return Ok(());
+        }
+        for signer in ix_args.order_signers_whitelist {
+            if false
+                == ctx
+                    .accounts
+                    .cash_register
+                    .order_signers_whitelist
+                    .contains(&signer)
+            {
+                ctx.accounts
+                    .cash_register
+                    .order_signers_whitelist
+                    .push(signer);
+            }
+        }
+        Ok(())
+    }
 }
 
 // create cash-regiser with initial configuration. If cash-regiser already exists (per given cash-regiser_id) the instruction will fail.
@@ -209,6 +242,7 @@ impl CashRegister {
         1 // cash_regiser bump,
         + 32 // cashier public key
         + (32 * ORDER_SIGNERS_WHITELIST_LIMIT) // array of public keys
+        + 32 // consumed_orders account address
         ;
 }
 
@@ -238,6 +272,18 @@ pub struct SettleOrderPaymentArgs {
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
 pub struct CreateTokenCashboxArgs {
     pub token_mint_key: Pubkey,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
+pub enum OrderSignersUpdateType {
+    MERGE,
+    OVERRIDE,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
+pub struct UpdateOrderSignersWhitelistArgs {
+    pub order_signers_whitelist: Vec<Pubkey>,
+    pub mode: OrderSignersUpdateType,
 }
 
 #[derive(Accounts)]
@@ -309,4 +355,14 @@ pub struct CreateTokenCashbox<'info> {
     pub system_program: Program<'info, System>,
     pub token_program: Program<'info, Token>,
     pub rent: Sysvar<'info, Rent>,
+}
+
+#[derive(Accounts)]
+#[instruction(ix: UpdateOrderSignersWhitelistArgs)]
+pub struct UpdateOrderSignersWhitelist<'info> {
+    #[account(mut)]
+    pub cashier: Signer<'info>,
+
+    #[account(mut)]
+    pub cash_register: Account<'info, CashRegister>,
 }

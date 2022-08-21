@@ -1,7 +1,7 @@
 import {
   mockCashierOrderService,
   anOrder,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../../utils/settle-payment";
 import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
@@ -14,35 +14,35 @@ registerSettleOrderPaymentTest(
     consumedOrders,
     customer,
     cashRegisterBump,
-    cashier,
+    knownOrderSigner,
   }) => {
     const { serializedOrder, signature } = mockCashierOrderService(
-      cashier,
+      knownOrderSigner,
       anOrder({
         cashRegisterId,
         customer: customer.publicKey,
       })
     );
-    await settleOrderPayment({
+    await settleOrderPaymentTest({
       cashRegister: cashRegister,
       cashRegisterId: cashRegisterId,
       cashRegisterBump: cashRegisterBump,
       serializedOrder,
       signature,
-      signerPublicKey: cashier.publicKey,
+      signerPublicKey: knownOrderSigner.publicKey,
       customer,
       orderItems: [],
       consumedOrders,
     });
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
           cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
-          signerPublicKey: cashier.publicKey,
+          signerPublicKey: knownOrderSigner.publicKey,
           customer,
           orderItems: [],
           consumedOrders,

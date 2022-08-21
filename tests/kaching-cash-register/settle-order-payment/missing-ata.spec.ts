@@ -2,7 +2,7 @@ import { Keypair } from "@solana/web3.js";
 import {
   mockCashierOrderService,
   anOrder,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../../utils/settle-payment";
 import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
@@ -16,6 +16,7 @@ registerSettleOrderPaymentTest(
     cashRegisterId,
     customer,
     consumedOrders,
+    knownOrderSigner,
   }) => {
     const items = new Array(2).fill(0).map(() => ({
       op: 1,
@@ -23,7 +24,7 @@ registerSettleOrderPaymentTest(
       currency: Keypair.generate().publicKey,
     }));
     const { serializedOrder, signature } = mockCashierOrderService(
-      cashier,
+      knownOrderSigner,
       anOrder({
         cashRegisterId,
         customer: customer.publicKey,
@@ -32,13 +33,13 @@ registerSettleOrderPaymentTest(
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister,
           cashRegisterId,
           cashRegisterBump,
           serializedOrder,
           signature,
-          signerPublicKey: cashier.publicKey,
+          signerPublicKey: knownOrderSigner.publicKey,
           customer,
           orderItems: items.slice(1),
           consumedOrders,

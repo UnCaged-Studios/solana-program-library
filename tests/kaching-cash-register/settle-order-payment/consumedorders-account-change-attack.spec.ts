@@ -3,7 +3,7 @@ import { createConsumedOrdersTestAccount } from "../../utils/cash-register";
 import {
   mockCashierOrderService,
   anOrder,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../../utils/settle-payment";
 import { V1 } from "../../../sdk/ts/v1";
 import { fundWalletWithSOL } from "../../utils/solana";
@@ -22,7 +22,7 @@ registerSettleOrderPaymentTest(
       createAccountParams
     );
     const { serializedOrder, signature } = mockCashierOrderService(
-      env.cashier,
+      env.knownOrderSigner,
       anOrder({
         cashRegisterId: env.cashRegisterId,
         customer: env.customer.publicKey,
@@ -30,11 +30,11 @@ registerSettleOrderPaymentTest(
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           ...env,
           serializedOrder,
           signature,
-          signerPublicKey: env.cashier.publicKey,
+          signerPublicKey: env.knownOrderSigner.publicKey,
           orderItems: [],
           consumedOrders: evilConsumedOrders,
         }),

@@ -16,7 +16,7 @@ describe("cashRegister account data", () => {
 
     const orderSignersWhitelistBuffer = raw2.subarray(33, 33 + 160); // order_signers_whitelist: Vec<Pubkey>
     const keysOffset = 4;
-    const remainsOffset = keysOffset + 32 * 3;
+    const remainsOffset = keysOffset + 32 * 2;
     const pubkeys = orderSignersWhitelistBuffer.subarray(
       keysOffset,
       remainsOffset
@@ -57,19 +57,15 @@ describe("cashRegister account data", () => {
     const accountData = deserialize(data);
 
     expect(accountData.pubkeys).toEqual(
-      Buffer.concat([
-        orderSigner1.toBytes(),
-        orderSigner2.toBytes(),
-        cashier.publicKey.toBytes(),
-      ])
+      Buffer.concat([orderSigner1.toBytes(), orderSigner2.toBytes()])
     );
   });
 
-  it("should failt to create a cashRegister if order_signers_whitelist is bigger than 5", () =>
+  it("should fail to create a cashRegister if order_signers_whitelist is bigger than 5", () =>
     shouldFail(
       () =>
         createTestCashRegister(cashier, {
-          orderSignersWhitelist: new Array(5)
+          orderSignersWhitelist: new Array(6)
             .fill(0)
             .map(() => Keypair.generate().publicKey),
         }),

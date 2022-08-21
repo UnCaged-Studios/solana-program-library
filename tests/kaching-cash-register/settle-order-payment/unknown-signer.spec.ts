@@ -2,7 +2,7 @@ import { Keypair } from "@solana/web3.js";
 import {
   mockCashierOrderService,
   anOrder,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../../utils/settle-payment";
 import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
@@ -27,7 +27,7 @@ registerSettleOrderPaymentTest(
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
           cashRegisterBump: cashRegisterBump,

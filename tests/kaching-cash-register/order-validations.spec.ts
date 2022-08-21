@@ -3,7 +3,7 @@ import { createTestCashRegister } from "../utils/cash-register";
 import {
   anOrder,
   mockCashierOrderService,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../utils/settle-payment";
 import { fundWalletWithSOL } from "../utils/solana";
 import { shouldFail } from "../utils/testing";
@@ -36,7 +36,7 @@ describe("order validations", () => {
 
   it("should fail a payment because of wrong cashRegister", async () => {
     const { serializedOrder, signature } = mockCashierOrderService(
-      cashier,
+      knownOrderSigner,
       anOrder({
         cashRegisterId: "blah",
         customer: customer.publicKey,
@@ -44,13 +44,13 @@ describe("order validations", () => {
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister,
           cashRegisterId,
           cashRegisterBump,
           serializedOrder,
           signature,
-          signerPublicKey: cashier.publicKey,
+          signerPublicKey: knownOrderSigner.publicKey,
           customer,
           orderItems: [],
           consumedOrders,
@@ -64,7 +64,7 @@ describe("order validations", () => {
     await fundWalletWithSOL(evilCustomer.publicKey);
 
     const { serializedOrder, signature } = mockCashierOrderService(
-      cashier,
+      knownOrderSigner,
       anOrder({
         cashRegisterId,
         customer: customer.publicKey,
@@ -72,13 +72,13 @@ describe("order validations", () => {
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
           cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
-          signerPublicKey: cashier.publicKey,
+          signerPublicKey: knownOrderSigner.publicKey,
           customer: evilCustomer,
           orderItems: [],
           consumedOrders,
@@ -89,7 +89,7 @@ describe("order validations", () => {
 
   it("should fail a payment because order is expired", async () => {
     const { serializedOrder, signature } = mockCashierOrderService(
-      cashier,
+      knownOrderSigner,
       anOrder({
         cashRegisterId,
         expiry: Date.now() / 1000 - 30, // expired 10 seconds ago
@@ -98,13 +98,13 @@ describe("order validations", () => {
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
           cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
-          signerPublicKey: cashier.publicKey,
+          signerPublicKey: knownOrderSigner.publicKey,
           customer,
           orderItems: [],
           consumedOrders,
@@ -115,7 +115,7 @@ describe("order validations", () => {
 
   it("should fail a payment because order is not valid yet", async () => {
     const { serializedOrder, signature } = mockCashierOrderService(
-      cashier,
+      knownOrderSigner,
       anOrder({
         cashRegisterId,
         notBefore: Date.now() / 1000 + 30, // order will be valid in 30 seconds
@@ -124,13 +124,13 @@ describe("order validations", () => {
     );
     return shouldFail(
       () =>
-        settleOrderPayment({
+        settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
           cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
-          signerPublicKey: cashier.publicKey,
+          signerPublicKey: knownOrderSigner.publicKey,
           customer,
           orderItems: [],
           consumedOrders,

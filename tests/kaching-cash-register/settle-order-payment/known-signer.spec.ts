@@ -1,7 +1,7 @@
 import {
   mockCashierOrderService,
   anOrder,
-  settleOrderPayment,
+  settleOrderPaymentTest,
 } from "../../utils/settle-payment";
 import { shouldSucceed } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
@@ -24,7 +24,7 @@ registerSettleOrderPaymentTest(
           customer: customer.publicKey,
         })
       );
-      return settleOrderPayment({
+      return settleOrderPaymentTest({
         cashRegister: cashRegister,
         cashRegisterId: cashRegisterId,
         cashRegisterBump: cashRegisterBump,

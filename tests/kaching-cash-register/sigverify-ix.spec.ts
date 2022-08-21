@@ -14,6 +14,7 @@ import { shouldFail, shouldSucceed } from "../utils/testing";
 
 describe("settle_order_payment instruction with Ed25519 SigVerify pre-instruction", () => {
   const cashier = Keypair.generate();
+  const knownOrderSigner = Keypair.generate();
 
   let settlePayment: (
     testOverrides: Partial<{
@@ -38,7 +39,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       const customer = Keypair.generate();
       await fundWalletWithSOL(customer.publicKey);
       const { serializedOrder, signature } = mockCashierOrderService(
-        cashier,
+        knownOrderSigner,
         anOrder({
           cashRegisterId: cashRegisterModel.cashRegisterId,
           customer: customer.publicKey,
@@ -49,7 +50,8 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       const ixEd25519Program = mutateEd25519Ix(
         Ed25519Program.createInstructionWithPublicKey({
           publicKey:
-            overrides.signerPublicKey?.toBytes() || cashier.publicKey.toBytes(),
+            overrides.signerPublicKey?.toBytes() ||
+            knownOrderSigner.publicKey.toBytes(),
           signature,
           message: serializedOrder,
           instructionIndex: overrides.instructionIndex,
@@ -61,7 +63,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
         cashRegisterBump: cashRegisterModel.cashRegisterBump,
         serializedOrder,
         signature,
-        signerPublicKey: customer.publicKey,
+        signerPublicKey: knownOrderSigner.publicKey,
         customer: customer.publicKey,
         orderItems: [],
         consumedOrders: cashRegisterModel.consumedOrders,
@@ -85,7 +87,9 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
 
   beforeAll(async () => {
     const { cashRegisterId, cashRegister, cashRegisterBump, consumedOrders } =
-      await createTestCashRegister(cashier, {});
+      await createTestCashRegister(cashier, {
+        orderSignersWhitelist: [knownOrderSigner.publicKey],
+      });
     settlePayment = settlePaymentTestFunctionFactory({
       cashRegisterId,
       cashRegister: cashRegister,
