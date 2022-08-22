@@ -1,0 +1,166 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  NORMAL:
+    sh: tput sgr0
+  BOLD:
+    sh: tput bold
+  GREEN:
+    sh: tput setaf 2
+  USER_KEY_PATH: "{{.HOME}}/.config/solana/id.json"
+  LOCAL_PROGRAM_KEYPAIR: "{{.HOME}}/.config/solana/prog.json"
+  DEVNET_DEPLOY_KEYPAIR: "{{.HOME}}/.config/solana/monkeyleague/devnet-deployer.json"
+  DEVNET_TOKEN_MINT_ADDRESS: "tMLonk3zwuHpA45k3qCRUBjDMkMkmnLUmnRWGnnz17R"
+  MONKEY_STAKING_PROG_ID: "MLnE7HFVmVdVTqGQEYWyBPhNQisb7RVUfKdU8cgAzET"
+  VERIFIABLE_PROGRAM_FILEPATH: "target/verifiable/monkey_staking.so"
+  IDL_PATH: "target/idl/monkey_staking.json"
+
+env:
+  SOLANA_VERSION: "v1.9.25"
+
+tasks:
+  default:
+    cmds:
+      - task: help
+    silent: true
+
+  help:
+    cmds:
+      - |
+        task --list | sed -E 's/^\* (.*):[[:blank:]]+(.*)/{{.GREEN}}task {{.BOLD}}\1{{.NORMAL}}\n  \2/'
+    silent: true
+
+  install-solana-toolchain:
+    cmds:
+     - |
+      curl -sSfL https://release.solana.com/$SOLANA_VERSION/install | sh
+
+  generate-local-prog-key:
+    status:
+      - '[ -f "{{.LOCAL_PROGRAM_KEYPAIR}}" ]'
+    cmds:
+      - solana-keygen new -o "{{.LOCAL_PROGRAM_KEYPAIR}}"
+
+  build:local:
+    desc: "Build contracts with local-testing feature"
+    cmds:
+      - node_modules/.bin/anchor build -- --features "local-testing"
+
+  test:local:
+    desc: "Run local tests"
+    deps:
+      - generate-local-prog-key
+    cmds:
+      - node_modules/.bin/anchor test --provider.cluster localnet -- --features "local-testing"
+
+  build:verifiable:
+    desc: "Builds a verifiable version of the contract for devnet"
+    cmds:
+      - anchor build --verifiable
+
+  deploy:devnet:
+    desc: "Deploys the contract to devnet"
+    interactive: true
+    cmds:
+      - task: deploy
+        vars:
+          PAYER_KEYPAIR_PATH: "{{ .DEVNET_DEPLOY_KEYPAIR }}"
+          CLUSTER: devnet
+
+  deploy:mainnet:
+    desc: "Deploys the contract to mainnet"
+    interactive: true
+    cmds:
+      - task: deploy
+        vars:
+          PAYER_KEYPAIR_PATH: "ASK"
+          CLUSTER: mainnet-beta
+
+  airdrop:devnet:
+    desc: "Requests an airdrop on devnet"
+    vars:
+      AMOUNT: '{{default "2" .AMOUNT}}'
+    cmds:
+      - solana airdrop -u devnet "{{.AMOUNT}}" "{{.DEVNET_DEPLOY_KEYPAIR}}"
+
+  idl-init:devnet:
+    desc: "Uploads the IDL to the on-chain registry"
+    vars:
+      PAYER_KEYPAIR_PATH: "{{ .DEVNET_DEPLOY_KEYPAIR }}"
+    cmds:
+      - >
+        anchor idl init
+        --filepath "{{ .IDL_PATH }}"
+        --provider.cluster devnet
+        --provider.wallet "{{ .PAYER_KEYPAIR_PATH }}"
+        "{{ .MONKEY_STAKING_PROG_ID }}"
+
+  migrate:devnet:
+    desc: "Run anchor migrate for devnet"
+    vars:
+      PAYER_KEYPAIR_PATH: "{{ .DEVNET_DEPLOY_KEYPAIR }}"
+      LOCK_END_DATE: "{{ default 0 .LOCK_END_DATE }}"
+    env:
+      TOKEN_MINT_ADDRESS: "{{ .DEVNET_TOKEN_MINT_ADDRESS }}"
+      LOCK_END_DATE: "{{ .LOCK_END_DATE }}"
+    cmds:
+      - >
+        anchor migrate
+        --provider.cluster devnet
+        --provider.wallet "{{ .PAYER_KEYPAIR_PATH }}"
+
+  create-test-token:
+    desc: "Creates on-chain the token used in the test contract"
+    vars:
+      PAYER_KEYPAIR_PATH: "{{ .DEVNET_DEPLOY_KEYPAIR }}"
+      TOKEN_KEYPAIR_PATH: "tests/keys/token.json"
+    cmds:
+      - >
+        spl-token create-token
+        --decimals 6
+        --fee-payer "{{ .PAYER_KEYPAIR_PATH }}"
+        --url devnet
+        {{ .TOKEN_KEYPAIR_PATH }}
+    
+  deploy:
+    interactive: true
+    vars:
+      CLUSTER: "{{ .CLUSTER }}"
+      PAYER_KEYPAIR_PATH: "{{ .PAYER_KEYPAIR_PATH }}"
+
+    env:
+      MONKEY_STAKING_PROG_ID: "{{ .MONKEY_STAKING_PROG_ID }}"
+      VERIFIABLE_PROGRAM_FILEPATH: "{{ .VERIFIABLE_PROGRAM_FILEPATH }}"
+      CLUSTER: "{{ .CLUSTER }}"
+      PAYER_KEYPAIR_PATH: "{{ .PAYER_KEYPAIR_PATH }}"
+    cmds:
+      - bash scripts/deploy.sh
+
+  verify:
+    vars:
+      CLUSTER: "{{.CLUSTER}}"
+    cmds:
+      - >
+        bash scripts/verify-deployed.sh
+        "{{ .MONKEY_STAKING_PROG_ID }}"
+
+  verify:devnet:
+    cmds:
+      - task: verify
+        vars:
+          CLUSTER: devnet2
+
+  list-buffers:devnet:
+    cmds:
+      - |
+        solana program show \
+          --url devnet \
+          --buffers \
+          --keypair "{{ .DEVNET_DEPLOY_KEYPAIR }}"
+
+  deployer-balance:devnet:
+    cmds:
+      - |
+        solana balance "{{ .DEVNET_DEPLOY_KEYPAIR }}"
