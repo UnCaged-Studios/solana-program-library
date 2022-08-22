@@ -10,9 +10,7 @@ import { registerSettleOrderPaymentTest } from "./runner";
 registerSettleOrderPaymentTest(
   "should fail to settle a payment if order item associated-token-account is not passed",
   async ({
-    cashier,
     cashRegister,
-    cashRegisterBump,
     cashRegisterId,
     customer,
     consumedOrders,
@@ -36,7 +34,6 @@ registerSettleOrderPaymentTest(
         settleOrderPaymentTest({
           cashRegister,
           cashRegisterId,
-          cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: knownOrderSigner.publicKey,

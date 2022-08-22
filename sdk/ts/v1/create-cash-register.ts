@@ -30,9 +30,7 @@ export const createTx = async ({
   orderSignersWhitelist,
   consumedOrders: { account, kNum, bitmapBitsNum, sipKeys },
 }: CreateCashRegisterParams) => {
-  const [cashRegister, _cashRegisterBump] = await findCashRegisterPDA(
-    cashRegisterId
-  );
+  const [cashRegister] = await findCashRegisterPDA(cashRegisterId);
   return program.methods
     .createCashRegister({
       cashRegisterId,

@@ -22,7 +22,6 @@ registerSettleOrderPaymentTest(
     cashRegister,
     cashier,
     customer,
-    cashRegisterBump,
     consumedOrders,
     knownOrderSigner,
   }) =>
@@ -62,7 +61,7 @@ registerSettleOrderPaymentTest(
       await settleOrderPaymentTest({
         cashRegister: cashRegister,
         cashRegisterId: cashRegisterId,
-        cashRegisterBump: cashRegisterBump,
+
         serializedOrder,
         signature,
         signerPublicKey: knownOrderSigner.publicKey,

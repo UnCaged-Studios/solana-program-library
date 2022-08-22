@@ -33,7 +33,6 @@ const findAssociatedTokenAddress = (
 export type SettleOrderPaymentParams = {
   cashRegister: PublicKey;
   cashRegisterId: string;
-  cashRegisterBump: number;
   serializedOrder: Uint8Array;
   signature: Uint8Array;
   signerPublicKey: PublicKey;
@@ -45,7 +44,6 @@ export type SettleOrderPaymentParams = {
 export const createTx = async ({
   cashRegister,
   cashRegisterId,
-  cashRegisterBump,
   serializedOrder,
   signature,
   signerPublicKey,
@@ -92,7 +90,6 @@ export const createTx = async ({
   return program.methods
     .settleOrderPayment({
       cashRegisterId,
-      cashRegisterBump,
     })
     .accounts({
       cashRegister,

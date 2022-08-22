@@ -8,7 +8,6 @@ export type SettlePaymentTestEnv = {
   customer: Keypair;
   cashRegister: PublicKey;
   cashRegisterId: string;
-  cashRegisterBump: number;
   consumedOrders: PublicKey;
 };
 
@@ -21,7 +20,7 @@ export const registerSettleOrderPaymentTest = (
   const customer = Keypair.generate();
 
   it(testTitle, async () => {
-    const [{ cashRegister, cashRegisterId, cashRegisterBump, consumedOrders }] =
+    const [{ cashRegister, cashRegisterId, consumedOrders }] =
       await Promise.all([
         createTestCashRegister(cashier, {
           orderSignersWhitelist: [knownOrderSigner.publicKey],
@@ -34,7 +33,6 @@ export const registerSettleOrderPaymentTest = (
       knownOrderSigner,
       cashRegister,
       cashRegisterId,
-      cashRegisterBump,
       customer,
       consumedOrders,
     });

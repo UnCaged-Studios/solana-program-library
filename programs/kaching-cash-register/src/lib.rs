@@ -266,7 +266,6 @@ pub struct CreateCashRegisterArgs {
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
 pub struct SettleOrderPaymentArgs {
     pub cash_register_id: String,
-    pub cash_register_bump: u8,
 }
 
 #[derive(AnchorSerialize, AnchorDeserialize, Eq, PartialEq, Clone, Debug)]
@@ -313,11 +312,7 @@ pub struct SettleOrderPayment<'info> {
     #[account(mut)]
     pub customer: Signer<'info>,
 
-    #[account(
-        mut,
-        seeds = [CASH_REGISTER_PDA_SEED.as_ref(), ix_args.cash_register_id.as_bytes().as_ref()],
-        bump = ix_args.cash_register_bump,
-    )]
+    #[account(mut)]
     pub cash_register: Account<'info, CashRegister>,
 
     #[account(mut)]

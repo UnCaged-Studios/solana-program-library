@@ -32,7 +32,6 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
     (cashRegisterModel: {
       cashRegister: PublicKey;
       cashRegisterId: string;
-      cashRegisterBump: number;
       consumedOrders: PublicKey;
     }): typeof settlePayment =>
     async (overrides) => {
@@ -60,7 +59,6 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       const tx = await V1.customerSDK.SettleOrderPayment.createTx({
         cashRegister: cashRegisterModel.cashRegister,
         cashRegisterId: cashRegisterModel.cashRegisterId,
-        cashRegisterBump: cashRegisterModel.cashRegisterBump,
         serializedOrder,
         signature,
         signerPublicKey: knownOrderSigner.publicKey,
@@ -86,26 +84,17 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
     };
 
   beforeAll(async () => {
-    const { cashRegisterId, cashRegister, cashRegisterBump, consumedOrders } =
+    const { cashRegisterId, cashRegister, consumedOrders } =
       await createTestCashRegister(cashier, {
         orderSignersWhitelist: [knownOrderSigner.publicKey],
       });
     settlePayment = settlePaymentTestFunctionFactory({
       cashRegisterId,
       cashRegister: cashRegister,
-      cashRegisterBump: cashRegisterBump,
+
       consumedOrders: consumedOrders,
     });
   });
-
-  // beforeEach(async () => {
-  //   settlePayment = settlePaymentTestFunctionFactory({
-  //     cashRegisterId,
-  //     cashRegister: cashRegister,
-  //     cashRegisterBump: cashRegisterBump,
-  //     consumedOrders: consumedOrders,
-  //   });
-  // });
 
   it("sanity (happy flow)", () => shouldSucceed(() => settlePayment({})));
 

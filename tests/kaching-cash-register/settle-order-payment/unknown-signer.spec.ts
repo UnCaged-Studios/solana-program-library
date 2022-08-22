@@ -9,13 +9,7 @@ import { registerSettleOrderPaymentTest } from "./runner";
 
 registerSettleOrderPaymentTest(
   "should fail to settle a payment if order signer is unknown",
-  async ({
-    cashRegisterId,
-    cashRegister,
-    consumedOrders,
-    customer,
-    cashRegisterBump,
-  }) => {
+  async ({ cashRegisterId, cashRegister, consumedOrders, customer }) => {
     const evilCashier = Keypair.generate();
 
     const { serializedOrder, signature } = mockCashierOrderService(
@@ -30,7 +24,7 @@ registerSettleOrderPaymentTest(
         settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
-          cashRegisterBump: cashRegisterBump,
+
           serializedOrder,
           signature,
           signerPublicKey: evilCashier.publicKey,

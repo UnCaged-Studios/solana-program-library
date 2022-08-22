@@ -13,7 +13,6 @@ registerSettleOrderPaymentTest(
     cashRegister,
     consumedOrders,
     customer,
-    cashRegisterBump,
     knownOrderSigner,
   }) => {
     const { serializedOrder, signature } = mockCashierOrderService(
@@ -26,7 +25,7 @@ registerSettleOrderPaymentTest(
     await settleOrderPaymentTest({
       cashRegister: cashRegister,
       cashRegisterId: cashRegisterId,
-      cashRegisterBump: cashRegisterBump,
+
       serializedOrder,
       signature,
       signerPublicKey: knownOrderSigner.publicKey,
@@ -39,7 +38,7 @@ registerSettleOrderPaymentTest(
         settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
-          cashRegisterBump: cashRegisterBump,
+
           serializedOrder,
           signature,
           signerPublicKey: knownOrderSigner.publicKey,

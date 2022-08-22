@@ -15,7 +15,6 @@ describe("order validations", () => {
   let cashRegisterId: string;
   let cashRegister: PublicKey;
   let consumedOrders: PublicKey;
-  let cashRegisterBump: number;
 
   let customer: Keypair;
 
@@ -26,7 +25,6 @@ describe("order validations", () => {
     cashRegister = res.cashRegister;
     cashRegisterId = res.cashRegisterId;
     consumedOrders = res.consumedOrders;
-    cashRegisterBump = res.cashRegisterBump;
   });
 
   beforeEach(async () => {
@@ -47,7 +45,6 @@ describe("order validations", () => {
         settleOrderPaymentTest({
           cashRegister,
           cashRegisterId,
-          cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: knownOrderSigner.publicKey,
@@ -75,7 +72,6 @@ describe("order validations", () => {
         settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
-          cashRegisterBump: cashRegisterBump,
           serializedOrder,
           signature,
           signerPublicKey: knownOrderSigner.publicKey,
@@ -101,7 +97,7 @@ describe("order validations", () => {
         settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
-          cashRegisterBump: cashRegisterBump,
+
           serializedOrder,
           signature,
           signerPublicKey: knownOrderSigner.publicKey,
@@ -127,7 +123,7 @@ describe("order validations", () => {
         settleOrderPaymentTest({
           cashRegister: cashRegister,
           cashRegisterId: cashRegisterId,
-          cashRegisterBump: cashRegisterBump,
+
           serializedOrder,
           signature,
           signerPublicKey: knownOrderSigner.publicKey,

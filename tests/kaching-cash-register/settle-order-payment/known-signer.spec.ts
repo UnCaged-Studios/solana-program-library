@@ -13,7 +13,6 @@ registerSettleOrderPaymentTest(
     cashRegister,
     knownOrderSigner,
     customer,
-    cashRegisterBump,
     consumedOrders,
   }) =>
     shouldSucceed(() => {
@@ -27,7 +26,7 @@ registerSettleOrderPaymentTest(
       return settleOrderPaymentTest({
         cashRegister: cashRegister,
         cashRegisterId: cashRegisterId,
-        cashRegisterBump: cashRegisterBump,
+
         serializedOrder,
         signature,
         signerPublicKey: knownOrderSigner.publicKey,

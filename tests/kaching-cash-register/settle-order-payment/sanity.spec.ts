@@ -58,7 +58,6 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
     await settleOrderPaymentTest({
       cashRegister: env.cashRegister,
       cashRegisterId: env.cashRegisterId,
-      cashRegisterBump: env.cashRegisterBump,
       serializedOrder,
       signature,
       signerPublicKey: env.knownOrderSigner.publicKey,
