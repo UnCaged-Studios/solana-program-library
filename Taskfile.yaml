@@ -1,6 +1,6 @@
 # https://taskfile.dev
 
-version: '3'
+version: "3"
 
 vars:
   NORMAL:
@@ -11,11 +11,10 @@ vars:
     sh: tput setaf 2
   USER_KEY_PATH: "{{.HOME}}/.config/solana/id.json"
   LOCAL_PROGRAM_KEYPAIR: "{{.HOME}}/.config/solana/prog.json"
-  DEVNET_DEPLOY_KEYPAIR: "{{.HOME}}/.config/solana/monkeyleague/devnet-deployer.json"
-  DEVNET_TOKEN_MINT_ADDRESS: "tMLonk3zwuHpA45k3qCRUBjDMkMkmnLUmnRWGnnz17R"
-  MONKEY_STAKING_PROG_ID: "MLnE7HFVmVdVTqGQEYWyBPhNQisb7RVUfKdU8cgAzET"
-  VERIFIABLE_PROGRAM_FILEPATH: "target/verifiable/monkey_staking.so"
-  IDL_PATH: "target/idl/monkey_staking.json"
+  DEVNET_DEPLOY_KEYPAIR: "{{.HOME}}/.config/solana/kaching-cashregister/kaching_cash_register-keypair.json"
+  KACHING_CASHREGISTER_PROG_ID: "86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD"
+  VERIFIABLE_PROGRAM_FILEPATH: "target/verifiable/kaching_cash_register.so"
+  IDL_PATH: "target/idl/kaching_cash_register.json"
 
 env:
   SOLANA_VERSION: "v1.9.25"
@@ -34,8 +33,8 @@ tasks:
 
   install-solana-toolchain:
     cmds:
-     - |
-      curl -sSfL https://release.solana.com/$SOLANA_VERSION/install | sh
+      - |
+        curl -sSfL https://release.solana.com/$SOLANA_VERSION/install | sh
 
   generate-local-prog-key:
     status:
@@ -95,21 +94,7 @@ tasks:
         --filepath "{{ .IDL_PATH }}"
         --provider.cluster devnet
         --provider.wallet "{{ .PAYER_KEYPAIR_PATH }}"
-        "{{ .MONKEY_STAKING_PROG_ID }}"
-
-  migrate:devnet:
-    desc: "Run anchor migrate for devnet"
-    vars:
-      PAYER_KEYPAIR_PATH: "{{ .DEVNET_DEPLOY_KEYPAIR }}"
-      LOCK_END_DATE: "{{ default 0 .LOCK_END_DATE }}"
-    env:
-      TOKEN_MINT_ADDRESS: "{{ .DEVNET_TOKEN_MINT_ADDRESS }}"
-      LOCK_END_DATE: "{{ .LOCK_END_DATE }}"
-    cmds:
-      - >
-        anchor migrate
-        --provider.cluster devnet
-        --provider.wallet "{{ .PAYER_KEYPAIR_PATH }}"
+        "{{ .KACHING_CASHREGISTER_PROG_ID }}"
 
   create-test-token:
     desc: "Creates on-chain the token used in the test contract"
@@ -123,7 +108,7 @@ tasks:
         --fee-payer "{{ .PAYER_KEYPAIR_PATH }}"
         --url devnet
         {{ .TOKEN_KEYPAIR_PATH }}
-    
+
   deploy:
     interactive: true
     vars:
@@ -131,7 +116,7 @@ tasks:
       PAYER_KEYPAIR_PATH: "{{ .PAYER_KEYPAIR_PATH }}"
 
     env:
-      MONKEY_STAKING_PROG_ID: "{{ .MONKEY_STAKING_PROG_ID }}"
+      KACHING_CASHREGISTER_PROG_ID: "{{ .KACHING_CASHREGISTER_PROG_ID }}"
       VERIFIABLE_PROGRAM_FILEPATH: "{{ .VERIFIABLE_PROGRAM_FILEPATH }}"
       CLUSTER: "{{ .CLUSTER }}"
       PAYER_KEYPAIR_PATH: "{{ .PAYER_KEYPAIR_PATH }}"
@@ -144,7 +129,7 @@ tasks:
     cmds:
       - >
         bash scripts/verify-deployed.sh
-        "{{ .MONKEY_STAKING_PROG_ID }}"
+        "{{ .KACHING_CASHREGISTER_PROG_ID }}"
 
   verify:devnet:
     cmds:

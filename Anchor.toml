@@ -16,10 +16,7 @@ test = "yarn jest --testTimeout=180000"
 kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [programs.devnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
-
-[programs.testnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+kaching_cash_register = "86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD"
 
 [programs.mainnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+kaching_cash_register = "86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD"

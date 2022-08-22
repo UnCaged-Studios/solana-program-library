@@ -15,6 +15,9 @@ use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use solana_program::account_info::AccountInfo;
 use spl_associated_token_account::get_associated_token_address;
 
+#[cfg(not(feature = "local-testing"))]
+declare_id!("86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD");
+#[cfg(feature = "local-testing")]
 declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 const CASH_REGISTER_PDA_SEED: &[u8] = b"cashregister";

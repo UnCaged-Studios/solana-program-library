@@ -2,7 +2,7 @@ set -e
 set -o pipefail
 
 TMPDIR="${TMPDIR:-"/tmp"}"
-LOCAL_BINARY_PATH="target/verifiable/monkey_staking.so"
+LOCAL_BINARY_PATH="target/verifiable/kaching_cash_register.so"
 CLUSTER="${CLUSTER:-"devnet"}"
 
 PROGRAM_ID=$1
