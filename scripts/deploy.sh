@@ -19,5 +19,6 @@ else
     --url "$CLUSTER" \
     --keypair "$PAYER_KEYPAIR_PATH" \
     --program-id ASK \
+    --skip-fee-check \
     "$VERIFIABLE_PROGRAM_FILEPATH"
 fi

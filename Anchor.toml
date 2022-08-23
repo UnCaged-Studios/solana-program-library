@@ -6,8 +6,8 @@ skip-lint = false
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "localnet"
-wallet = "~/.config/solana/prog.json"
+cluster = "devnet"
+wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn jest --testTimeout=180000"
@@ -16,7 +16,7 @@ test = "yarn jest --testTimeout=180000"
 kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
 
 [programs.devnet]
-kaching_cash_register = "86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD"
+kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
 
 [programs.mainnet]
-kaching_cash_register = "86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD"
+kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"

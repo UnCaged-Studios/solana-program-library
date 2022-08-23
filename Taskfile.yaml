@@ -11,8 +11,8 @@ vars:
     sh: tput setaf 2
   USER_KEY_PATH: "{{.HOME}}/.config/solana/id.json"
   LOCAL_PROGRAM_KEYPAIR: "{{.HOME}}/.config/solana/prog.json"
-  DEVNET_DEPLOY_KEYPAIR: "{{.HOME}}/.config/solana/kaching-cashregister/kaching_cash_register-keypair.json"
-  KACHING_CASHREGISTER_PROG_ID: "86gFSX4798b5cXtrrFpSm2AvLkMZRx4MRhFgovpbG1tD"
+  DEVNET_DEPLOY_KEYPAIR: "{{.HOME}}/.config/solana/id.json"
+  KACHING_CASHREGISTER_PROG_ID: "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
   VERIFIABLE_PROGRAM_FILEPATH: "target/verifiable/kaching_cash_register.so"
   IDL_PATH: "target/idl/kaching_cash_register.json"
 
@@ -95,19 +95,6 @@ tasks:
         --provider.cluster devnet
         --provider.wallet "{{ .PAYER_KEYPAIR_PATH }}"
         "{{ .KACHING_CASHREGISTER_PROG_ID }}"
-
-  create-test-token:
-    desc: "Creates on-chain the token used in the test contract"
-    vars:
-      PAYER_KEYPAIR_PATH: "{{ .DEVNET_DEPLOY_KEYPAIR }}"
-      TOKEN_KEYPAIR_PATH: "tests/keys/token.json"
-    cmds:
-      - >
-        spl-token create-token
-        --decimals 6
-        --fee-payer "{{ .PAYER_KEYPAIR_PATH }}"
-        --url devnet
-        {{ .TOKEN_KEYPAIR_PATH }}
 
   deploy:
     interactive: true
