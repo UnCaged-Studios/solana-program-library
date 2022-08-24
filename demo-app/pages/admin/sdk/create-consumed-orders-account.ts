@@ -1,9 +1,6 @@
-import * as anchor from "@project-serum/anchor";
 import { PublicKey, SystemProgram, CreateAccountParams } from "@solana/web3.js";
-import { KachingCashRegister } from "../../../target/types/kaching_cash_register";
-
-const program = anchor.workspace
-  .KachingCashRegister as anchor.Program<KachingCashRegister>;
+import BN from "bn.js";
+import { KACHING_PROGRAM_ID } from "./anchor-client";
 
 const sip_keys_size = 4 * 8; // [u64; 4]
 const bitmap_bits_num = 8; // u64
@@ -14,9 +11,9 @@ const sizeInBytes = 120; // number_of_bits: 7_188_800 (898_600 bytes) => 500_000
 export type ConsumedOrdersParams = {
   createAccountParams: Pick<CreateAccountParams, "space" | "programId">;
   cashRegisterInitParams: {
-    bitmapBitsNum: anchor.BN;
+    bitmapBitsNum: BN;
     kNum: number;
-    sipKeys: Array<anchor.BN>;
+    sipKeys: Array<BN>;
   };
 };
 
@@ -27,10 +24,10 @@ export const createParams = (): ConsumedOrdersParams => {
     "1157159078456920585",
     "1735880461161533969",
     "2314601843866147353",
-  ].map((str) => new anchor.BN(str));
+  ].map((str) => new BN(str));
   return {
     cashRegisterInitParams: {
-      bitmapBitsNum: new anchor.BN("960"),
+      bitmapBitsNum: new BN("960"),
       kNum: 7,
       sipKeys,
     },
@@ -42,7 +39,7 @@ export const createParams = (): ConsumedOrdersParams => {
         sip_keys_size +
         borsh_bytes_array_length_mark +
         sizeInBytes,
-      programId: program.programId,
+      programId: KACHING_PROGRAM_ID,
     },
   };
 };
