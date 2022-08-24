@@ -6,14 +6,14 @@ skip-lint = false
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+cluster = "localnet"
 wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn jest --testTimeout=180000"
 
 [programs.localnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
 
 [programs.devnet]
 kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
