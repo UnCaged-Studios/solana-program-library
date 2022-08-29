@@ -1,4 +1,4 @@
-import { V1 } from "../../../sdk/ts/v1";
+import { orderSignerSDK } from "../../../sdk/ts/v1/with-anchor";
 import {
   mockCashierOrderService,
   anOrder,
@@ -37,12 +37,12 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
     {
       amount: calculateAmountInDecimals(2),
       currency: c1,
-      op: V1.orderSignerSDK.OrderItemOperation.DEBIT_CUSTOMER,
+      op: orderSignerSDK.OrderItemOperation.DEBIT_CUSTOMER,
     },
     {
       amount: calculateAmountInDecimals(1),
       currency: c2,
-      op: V1.orderSignerSDK.OrderItemOperation.CREDIT_CUSTOMER,
+      op: orderSignerSDK.OrderItemOperation.CREDIT_CUSTOMER,
     },
   ];
   const { serializedOrder, signature } = mockCashierOrderService(

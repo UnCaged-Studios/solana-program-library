@@ -1,4 +1,4 @@
-import { V1 } from "../../../sdk/ts/v1";
+import { orderSignerSDK } from "../../../sdk/ts/v1/with-anchor";
 import {
   mockCashierOrderService,
   anOrder,
@@ -44,7 +44,7 @@ registerSettleOrderPaymentTest(
       const orderItems = new Array(MAXIMUM_ORDER_ITEMS_LENGTH)
         .fill(0)
         .map(() => ({
-          op: V1.orderSignerSDK.OrderItemOperation.DEBIT_CUSTOMER,
+          op: orderSignerSDK.OrderItemOperation.DEBIT_CUSTOMER,
           amount: calculateAmountInDecimals(1),
           currency,
         }));

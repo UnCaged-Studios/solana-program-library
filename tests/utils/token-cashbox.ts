@@ -1,9 +1,7 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { sendAndConfirmTx } from "./solana";
-import {
-  createTx,
-  findTokenCashboxPDA,
-} from "../../sdk/ts/v1/create-token-cashbox";
+import { adminSDK } from "../../sdk/ts/v1/with-anchor";
+import { findTokenCashboxPDA } from "../../sdk/ts/v1/create-token-cashbox";
 
 export const createTokenCashbox = async ({
   currency,
@@ -14,7 +12,7 @@ export const createTokenCashbox = async ({
   cashier: Keypair;
   cashRegisterId: string;
 }) => {
-  const tx = await createTx({
+  const tx = await adminSDK.CreateTokenCashbox.createTx({
     cashier: cashier.publicKey,
     currency,
     cashRegisterId,

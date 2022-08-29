@@ -4,7 +4,7 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { V1 } from "../../../sdk/ts/v1";
+import { adminSDK } from "../../../sdk/ts/v1/with-anchor";
 import { createTestCashRegister } from "../../utils/cash-register";
 import { fundWalletWithSOL, sendAndConfirmTx } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";
@@ -16,7 +16,7 @@ const withDifferentOwner = (programId: PublicKey) =>
       await fundWalletWithSOL(evilCashier.publicKey);
       const {
         createAccountParams: { space },
-      } = V1.adminSDK.CreateConsumedOrdersAccount.createParams();
+      } = adminSDK.CreateConsumedOrdersAccount.createParams();
       const consumedOrdersAccount = Keypair.generate();
       const createConsumedOrdersTx = SystemProgram.createAccount({
         fromPubkey: evilCashier.publicKey,

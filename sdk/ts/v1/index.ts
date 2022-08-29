@@ -1,21 +1,19 @@
-import * as CreateConsumedOrdersAccount from "./create-consumed-orders-account";
-import * as CreateCashRegister from "./create-cash-register";
-import * as CreateTokenCashbox from "./create-token-cashbox";
-import * as SettleOrderPayment from "./settle-order-payment";
+import { CreateConsumedOrdersAccount } from "./create-consumed-orders-account";
+import { CreateCashRegister } from "./create-cash-register";
+import { CreateTokenCashbox } from "./create-token-cashbox";
+import { SettleOrderPayment } from "./settle-order-payment";
 import * as orderSignerSDK from "./order-signer";
 
-const adminSDK = {
-  CreateConsumedOrdersAccount,
-  CreateCashRegister,
-  CreateTokenCashbox,
-};
+import type { IProgramAPI } from "./program";
 
-const customerSDK = {
-  SettleOrderPayment,
-};
+export const createAdminSDKv1 = (programAPI: IProgramAPI) => ({
+  CreateConsumedOrdersAccount: new CreateConsumedOrdersAccount(),
+  CreateCashRegister: new CreateCashRegister(programAPI),
+  CreateTokenCashbox: new CreateTokenCashbox(programAPI),
+});
 
-export const V1 = {
-  adminSDK,
-  customerSDK,
-  orderSignerSDK,
-};
+export const createCustomerSDKv1 = (programAPI: IProgramAPI) => ({
+  SettleOrderPayment: new SettleOrderPayment(programAPI),
+});
+
+export const createOrderSignerSDKv1 = () => orderSignerSDK;

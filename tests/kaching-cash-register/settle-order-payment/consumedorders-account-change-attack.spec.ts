@@ -5,7 +5,7 @@ import {
   anOrder,
   settleOrderPaymentTest,
 } from "../../utils/settle-payment";
-import { V1 } from "../../../sdk/ts/v1";
+import { adminSDK } from "../../../sdk/ts/v1/with-anchor";
 import { fundWalletWithSOL } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";
@@ -16,7 +16,7 @@ registerSettleOrderPaymentTest(
     const evilCashier = Keypair.generate();
     await fundWalletWithSOL(evilCashier.publicKey);
     const { createAccountParams } =
-      V1.adminSDK.CreateConsumedOrdersAccount.createParams();
+      adminSDK.CreateConsumedOrdersAccount.createParams();
     const evilConsumedOrders = await createConsumedOrdersTestAccount(
       evilCashier,
       createAccountParams

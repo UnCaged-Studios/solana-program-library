@@ -6,7 +6,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { V1 } from "../../sdk/ts/v1";
+import { customerSDK } from "../../sdk/ts/v1/with-anchor";
 import { createTestCashRegister } from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { fundWalletWithSOL, sendAndConfirmTx } from "../utils/solana";
@@ -56,7 +56,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
           instructionIndex: overrides.instructionIndex,
         })
       );
-      const tx = await V1.customerSDK.SettleOrderPayment.createTx({
+      const tx = await customerSDK.SettleOrderPayment.createTx({
         cashRegister: cashRegisterModel.cashRegister,
         cashRegisterId: cashRegisterModel.cashRegisterId,
         serializedOrder,

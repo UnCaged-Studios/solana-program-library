@@ -1,7 +1,8 @@
 import { PublicKey, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { V1 } from "../../sdk/ts/v1";
+import { adminSDK } from "../../sdk/ts/v1/with-anchor";
 import { ConsumedOrdersParams } from "../../sdk/ts/v1/create-consumed-orders-account";
 import { fundWalletWithSOL, sendAndConfirmTx } from "./solana";
+import { findCashRegisterPDA } from "../../sdk/ts/v1/create-cash-register";
 
 const randomLowerCaseCharCode = () =>
   [1, 2, 3]
@@ -18,7 +19,7 @@ export const createConsumedOrdersTestAccount = async (
 ) => {
   const targetAccount = Keypair.generate();
   await sendAndConfirmTx(
-    V1.adminSDK.CreateConsumedOrdersAccount.createTx(
+    adminSDK.CreateConsumedOrdersAccount.createTx(
       payer.publicKey,
       targetAccount.publicKey,
       LAMPORTS_PER_SOL * 10,
@@ -43,16 +44,16 @@ export const createTestCashRegister = async (
 ) => {
   await fundWalletWithSOL(cashierWallet.publicKey);
   const { createAccountParams, cashRegisterInitParams } =
-    V1.adminSDK.CreateConsumedOrdersAccount.createParams();
+    adminSDK.CreateConsumedOrdersAccount.createParams();
 
   const [[cashRegister, cashRegisterBump], consumedOrdersAccount] =
     await Promise.all([
-      V1.adminSDK.CreateCashRegister.findCashRegisterPDA(cashRegisterId),
+      findCashRegisterPDA(cashRegisterId),
       consumedOrders ||
         createConsumedOrdersTestAccount(cashierWallet, createAccountParams),
     ]);
 
-  const tx = await V1.adminSDK.CreateCashRegister.createTx({
+  const tx = await adminSDK.CreateCashRegister.createTx({
     cashier: cashierWallet.publicKey,
     cashRegisterId,
     orderSignersWhitelist,
