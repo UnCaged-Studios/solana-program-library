@@ -1,4 +1,4 @@
-import { orderSignerSDK } from "../../../sdk/ts/with-anchor";
+import { orderSignerSDK } from "../../../sdk/ts/ka-ching/with-anchor";
 import {
   mockCashierOrderService,
   anOrder,
@@ -9,6 +9,7 @@ import {
   getMintBalanceForWallet,
   setupCurrency,
 } from "../../utils/solana";
+import { resolveTxError } from "../../utils/testing";
 import { createTokenCashbox } from "../../utils/token-cashbox";
 import { registerSettleOrderPaymentTest } from "./runner";
 
@@ -65,7 +66,8 @@ registerSettleOrderPaymentTest("should settle a payment", async (env) => {
       orderItems,
       consumedOrders: env.consumedOrders,
     });
-  } catch (error) {
+  } catch (e) {
+    const error = resolveTxError(e);
     if (error.logs) {
       console.info(error.logs);
     } else {

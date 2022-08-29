@@ -5,7 +5,7 @@ import {
   createOrderSignerSDKv1,
 } from ".";
 
-import type { KachingCashRegister } from "../../target/types/kaching_cash_register";
+import type { KachingCashRegister } from "../../../target/types/kaching_cash_register";
 
 const program = anchor.workspace
   .KachingCashRegister as anchor.Program<KachingCashRegister>;

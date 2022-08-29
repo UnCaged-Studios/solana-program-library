@@ -89,8 +89,13 @@ export const getMintBalanceForWallet = async (
   return tokenAccountInfo.amount;
 };
 
-export const getAccountInfo = (address: PublicKey) =>
-  localnetConnection.getAccountInfo(address);
+export const getAccountInfo = async (address: PublicKey) => {
+  const accountInfo = await localnetConnection.getAccountInfo(address);
+  if (accountInfo === null) {
+    throw new Error(`AccountInfo of ${address} wad not found`);
+  }
+  return accountInfo;
+};
 
 export const sendAndConfirmTx = (
   ix: Transaction | TransactionInstruction,

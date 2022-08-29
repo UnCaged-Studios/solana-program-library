@@ -1,8 +1,8 @@
 import { Keypair } from "@solana/web3.js";
 import nacl from "tweetnacl";
-import { customerSDK, orderSignerSDK } from "../../sdk/ts/with-anchor";
-import { OrderModel } from "../../sdk/ts/v1/order-signer";
-import { SettleOrderPaymentParams } from "../../sdk/ts/v1/settle-order-payment";
+import { customerSDK, orderSignerSDK } from "../../sdk/ts/ka-ching/with-anchor";
+import { OrderModel } from "../../sdk/ts/ka-ching/v1/order-signer";
+import { SettleOrderPaymentParams } from "../../sdk/ts/ka-ching/v1/settle-order-payment";
 import { sendAndConfirmTx } from "./solana";
 
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>

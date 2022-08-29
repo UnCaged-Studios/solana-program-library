@@ -1,10 +1,31 @@
 {
+  "name": "@uncaged-studios/solana-program-library-sdk",
+  "description": "UnCaged Studios Solana Programs Typescript SDKs",
+  "version": "0.0.4",
+  "main": "dist/sdk/ts/index.js",
+  "files": [
+    "dist/sdk/ts",
+    "dist/target/idl",
+    "dist/target/types"
+  ],
+  "directories": {
+    "test": "tests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UnCaged-Studios/solana-program-library.git"
+  },
+  "author": "perestom@gmail.com",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/UnCaged-Studios/solana-program-library/issues"
+  },
+  "homepage": "https://github.com/UnCaged-Studios/solana-program-library#readme",
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
   },
   "dependencies": {
-    "@project-serum/anchor": "^0.25.0",
     "@solana/spl-token": "^0.2.0",
     "borsh": "^0.7.0"
   },
@@ -12,6 +33,7 @@
     "@babel/core": "^7.18.10",
     "@babel/preset-env": "^7.18.10",
     "@babel/preset-typescript": "^7.18.6",
+    "@project-serum/anchor": "^0.25.0",
     "@project-serum/anchor-cli": "^0.25.0",
     "@types/bn.js": "^5.1.0",
     "@types/jest": "^28.1.6",

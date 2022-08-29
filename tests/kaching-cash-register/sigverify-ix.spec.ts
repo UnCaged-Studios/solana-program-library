@@ -6,7 +6,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { customerSDK } from "../../sdk/ts/with-anchor";
+import { customerSDK } from "../../sdk/ts/ka-ching/with-anchor";
 import { createTestCashRegister } from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { fundWalletWithSOL, sendAndConfirmTx } from "../utils/solana";
@@ -71,7 +71,7 @@ describe("settle_order_payment instruction with Ed25519 SigVerify pre-instructio
       if (overrides.instructionsSysvar) {
         tx.instructions[1].keys.forEach((k, idx) => {
           if (k.pubkey.equals(SYSVAR_INSTRUCTIONS_PUBKEY)) {
-            tx.instructions[1].keys[idx].pubkey = overrides.instructionsSysvar;
+            tx.instructions[1].keys[idx].pubkey = overrides.instructionsSysvar!;
           }
         });
       }

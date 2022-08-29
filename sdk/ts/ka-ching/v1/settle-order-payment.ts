@@ -97,7 +97,7 @@ export class SettleOrderPayment {
         consumedOrders,
       })
       .remainingAccounts(orderItemsAccounts)
-      .preInstructions([ixEd25519Program, computeBudgetIx].filter(Boolean))
+      .preInstructions([ixEd25519Program, computeBudgetIx!].filter(Boolean))
       .transaction();
   }
 }
