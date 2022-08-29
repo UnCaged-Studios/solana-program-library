@@ -7,19 +7,16 @@ url = "https://api.apr.dev"
 
 [provider]
 cluster = "localnet"
-wallet = "~/.config/solana/prog.json"
+wallet = "~/.config/solana/id.json"
 
 [scripts]
 test = "yarn jest --testTimeout=180000"
 
 [programs.localnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+kaching_cash_register = "9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF"
 
 [programs.devnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
-
-[programs.testnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+kaching_cash_register = "9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF"
 
 [programs.mainnet]
-kaching_cash_register = "Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS"
+kaching_cash_register = "9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF"

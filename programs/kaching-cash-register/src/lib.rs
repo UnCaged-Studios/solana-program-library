@@ -15,7 +15,7 @@ use anchor_spl::token::{self, Mint, Token, TokenAccount};
 use solana_program::account_info::AccountInfo;
 use spl_associated_token_account::get_associated_token_address;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF");
 
 const CASH_REGISTER_PDA_SEED: &[u8] = b"cashregister";
 const ORDER_SIGNERS_WHITELIST_LIMIT: usize = 5;
@@ -248,7 +248,7 @@ impl CashRegister {
 
 #[account(zero_copy)]
 pub struct ConsumedOrders {
-    pub bytes: [u8; 898_600], // number_of_bits: 7_188_800 (898_600 bytes) => 500_000 items with 0.001 false-positive rate
+    pub bytes: [u8; 89_860], // number_of_bits: 7_188_800 (89_860 bytes) => 50_000 items with 0.001 false-positive rate
     pub k_num: u32,
     pub bitmap_bits_num: u64,
     pub sip_keys: [u64; 4],
