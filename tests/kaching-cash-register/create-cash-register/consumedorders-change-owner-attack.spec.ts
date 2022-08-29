@@ -4,7 +4,7 @@ import {
   SystemProgram,
   LAMPORTS_PER_SOL,
 } from "@solana/web3.js";
-import { adminSDK } from "../../../sdk/ts/v1/with-anchor";
+import { adminSDK } from "../../../sdk/ts/with-anchor";
 import { createTestCashRegister } from "../../utils/cash-register";
 import { fundWalletWithSOL, sendAndConfirmTx } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";

@@ -1,4 +1,4 @@
-import { orderSignerSDK } from "../../../sdk/ts/v1/with-anchor";
+import { orderSignerSDK } from "../../../sdk/ts/with-anchor";
 import {
   mockCashierOrderService,
   anOrder,

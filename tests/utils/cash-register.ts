@@ -1,5 +1,5 @@
 import { PublicKey, Keypair, LAMPORTS_PER_SOL } from "@solana/web3.js";
-import { adminSDK } from "../../sdk/ts/v1/with-anchor";
+import { adminSDK } from "../../sdk/ts/with-anchor";
 import { ConsumedOrdersParams } from "../../sdk/ts/v1/create-consumed-orders-account";
 import { fundWalletWithSOL, sendAndConfirmTx } from "./solana";
 import { findCashRegisterPDA } from "../../sdk/ts/v1/create-cash-register";

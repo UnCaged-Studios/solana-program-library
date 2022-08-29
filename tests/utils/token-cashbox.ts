@@ -1,6 +1,6 @@
 import { Keypair, PublicKey } from "@solana/web3.js";
 import { sendAndConfirmTx } from "./solana";
-import { adminSDK } from "../../sdk/ts/v1/with-anchor";
+import { adminSDK } from "../../sdk/ts/with-anchor";
 import { findTokenCashboxPDA } from "../../sdk/ts/v1/create-token-cashbox";
 
 export const createTokenCashbox = async ({

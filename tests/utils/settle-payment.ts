@@ -1,6 +1,6 @@
 import { Keypair } from "@solana/web3.js";
 import nacl from "tweetnacl";
-import { customerSDK, orderSignerSDK } from "../../sdk/ts/v1/with-anchor";
+import { customerSDK, orderSignerSDK } from "../../sdk/ts/with-anchor";
 import { OrderModel } from "../../sdk/ts/v1/order-signer";
 import { SettleOrderPaymentParams } from "../../sdk/ts/v1/settle-order-payment";
 import { sendAndConfirmTx } from "./solana";

@@ -5,7 +5,7 @@ import {
   anOrder,
   settleOrderPaymentTest,
 } from "../../utils/settle-payment";
-import { adminSDK } from "../../../sdk/ts/v1/with-anchor";
+import { adminSDK } from "../../../sdk/ts/with-anchor";
 import { fundWalletWithSOL } from "../../utils/solana";
 import { shouldFail } from "../../utils/testing";
 import { registerSettleOrderPaymentTest } from "./runner";

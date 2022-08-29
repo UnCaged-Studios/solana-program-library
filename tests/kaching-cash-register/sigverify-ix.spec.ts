@@ -6,7 +6,7 @@ import {
   PublicKey,
   TransactionInstruction,
 } from "@solana/web3.js";
-import { customerSDK } from "../../sdk/ts/v1/with-anchor";
+import { customerSDK } from "../../sdk/ts/with-anchor";
 import { createTestCashRegister } from "../utils/cash-register";
 import { anOrder, mockCashierOrderService } from "../utils/settle-payment";
 import { fundWalletWithSOL, sendAndConfirmTx } from "../utils/solana";
