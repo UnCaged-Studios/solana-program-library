@@ -13,10 +13,10 @@ wallet = "~/.config/solana/id.json"
 test = "yarn jest --testTimeout=180000"
 
 [programs.localnet]
-kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
+kaching_cash_register = "9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF"
 
 [programs.devnet]
-kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
+kaching_cash_register = "9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF"
 
 [programs.mainnet]
-kaching_cash_register = "3b1JpnaCqMbWq14rxz5VCcuaMEBkFcyicvi9aMjMohkr"
+kaching_cash_register = "9Pg1X5SXH4m2VXFLBd711GYc98aYAG5DVJW5ssFL28pF"

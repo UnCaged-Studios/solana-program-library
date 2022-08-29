@@ -9,7 +9,7 @@ const sip_keys_size = 4 * 8; // [u64; 4]
 const bitmap_bits_num = 8; // u64
 const k_num = 4; // u32
 const borsh_bytes_array_length_mark = 4; // u32
-const sizeInBytes = 120; // number_of_bits: 7_188_800 (898_600 bytes) => 500_000 items with 0.001 false-positive rate
+const sizeInBytes = 89_860; // number_of_bits: 718_880 (89_860 bytes) => 50_000 items with 0.001 false-positive rate
 
 export type ConsumedOrdersParams = {
   createAccountParams: Pick<CreateAccountParams, "space" | "programId">;
@@ -30,8 +30,8 @@ export const createParams = (): ConsumedOrdersParams => {
   ].map((str) => new anchor.BN(str));
   return {
     cashRegisterInitParams: {
-      bitmapBitsNum: new anchor.BN("960"),
-      kNum: 7,
+      bitmapBitsNum: new anchor.BN("718880"),
+      kNum: 10,
       sipKeys,
     },
     createAccountParams: {
