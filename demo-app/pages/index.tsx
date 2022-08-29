@@ -1,6 +1,7 @@
 import type { NextPage } from "next";
 import Head from "next/head";
 import Image from "next/image";
+import Link from "next/link";
 import styles from "../styles/Home.module.css";
 
 const Home: NextPage = () => {
@@ -18,10 +19,10 @@ const Home: NextPage = () => {
         <p className={styles.description}>The Solana on-chain PoS</p>
 
         <div className={styles.grid}>
-          <a href="/admin" className={styles.card}>
+          <Link href="/admin" className={styles.card}>
             <h2>Admin &rarr;</h2>
             <p>Connect your wallet and start managing your PoS</p>
-          </a>
+          </Link>
 
           <a href="https://nextjs.org/learn" className={styles.card}>
             <h2>End-to-End Demo &rarr;</h2>
