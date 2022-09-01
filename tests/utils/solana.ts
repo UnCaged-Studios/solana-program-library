@@ -107,3 +107,6 @@ export const sendAndConfirmTx = (
     signers,
     { commitment: "finalized" }
   );
+
+export const getParsedTransaction = (s: string) =>
+  localnetConnection.getParsedTransaction(s);

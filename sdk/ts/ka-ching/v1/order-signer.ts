@@ -1,26 +1,33 @@
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, ParsedTransactionWithMeta } from "@solana/web3.js";
 import * as borsh from "borsh";
+import base58 from "bs58";
+import BN from "bn.js";
+import { PROGRAM_ID } from "./program";
 
 const getItemsBuffAllocation = (items: Array<unknown>) => 4 + items.length * 41;
 
 class OrderItemEncoderContainer {
-  constructor(
-    public amount: number,
-    public currency: Uint8Array,
-    public op: number
-  ) {}
+  amount!: number;
+  currency!: Uint8Array;
+  op!: number;
+
+  constructor(args: OrderItemEncoderContainer) {
+    Object.assign(this, args);
+  }
 }
 
 class OrderEncoderContainer {
-  constructor(
-    public id: Uint8Array,
-    public expiry: number,
-    public customer: Uint8Array,
-    public not_before: number,
-    public created_at: number,
-    public cash_register_id: String,
-    public items: Uint8Array
-  ) {}
+  id!: Uint8Array;
+  expiry!: number;
+  customer!: Uint8Array;
+  not_before!: number;
+  created_at!: number;
+  cash_register_id!: string;
+  items!: Uint8Array;
+
+  constructor(args: OrderEncoderContainer) {
+    Object.assign(this, args);
+  }
 }
 
 const serializeOrderItem = (item: OrderItemModel) =>
@@ -38,7 +45,11 @@ const serializeOrderItem = (item: OrderItemModel) =>
         },
       ],
     ]),
-    new OrderItemEncoderContainer(item.amount, item.currency.toBytes(), item.op)
+    new OrderItemEncoderContainer({
+      amount: item.amount,
+      currency: item.currency.toBytes(),
+      op: item.op,
+    })
   );
 
 const serializeOrderItems = (items: OrderModel["items"]) => {
@@ -92,16 +103,99 @@ export const serializeOrder = (order: OrderModel) =>
         },
       ],
     ]),
-    new OrderEncoderContainer(
-      encodeUUID(order.id),
-      order.expiry,
-      order.customer.toBytes(),
-      order.notBefore,
-      order.createdAt,
-      order.cashRegisterId,
-      serializeOrderItems(order.items)
-    )
+    new OrderEncoderContainer({
+      id: encodeUUID(order.id),
+      expiry: order.expiry,
+      customer: order.customer.toBytes(),
+      not_before: order.notBefore,
+      created_at: order.createdAt,
+      cash_register_id: order.cashRegisterId,
+      items: serializeOrderItems(order.items),
+    })
   );
+
+type ParsedOrder = {
+  id: string;
+  expiry: number;
+  customer: Uint8Array;
+  notBefore: number;
+  createdAt: number;
+  cashRegisterId: string;
+};
+
+const getSigverifyIx = (tx: ParsedTransactionWithMeta) => {
+  if (!tx.meta || tx.meta.err != null || tx.meta.err != undefined) {
+    throw new Error(`transaction meta.err object is invalid: ${tx.meta?.err}`);
+  }
+  if (tx.transaction.message.instructions.length !== 2) {
+    throw new Error(
+      `transaction message.instructions length is invalid ${tx.transaction.message.instructions.length}`
+    );
+  }
+  if (
+    tx.transaction.message.instructions.at(0)?.programId.toBase58() !==
+    "Ed25519SigVerify111111111111111111111111111"
+  ) {
+    throw new Error(
+      `tx.transaction.message.instructions.at(0) is not Ed25519SigVerify111111111111111111111111111`
+    );
+  }
+  if (
+    tx.transaction.message.instructions.at(1)?.programId.toBase58() !==
+    PROGRAM_ID.toBase58()
+  ) {
+    throw new Error(
+      `tx.transaction.message.instructions.at(1) is not ${PROGRAM_ID.toBase58()}`
+    );
+  }
+  const sigverify_ix = tx.transaction.message.instructions.at(0);
+  if (sigverify_ix && "data" in sigverify_ix && sigverify_ix.data) {
+    return sigverify_ix;
+  }
+  throw new Error(`sigverify_ix is undefined or has no data field`);
+};
+
+export const parseOrderFromSettlePaymentTx = (
+  tx: ParsedTransactionWithMeta
+): ParsedOrder => {
+  const sigverify_ix = getSigverifyIx(tx);
+  const data = Buffer.from(base58.decode(sigverify_ix.data)).subarray(112);
+  const deserializedOrder = borsh.deserializeUnchecked(
+    new Map([
+      [
+        OrderEncoderContainer,
+        {
+          kind: "struct",
+          fields: [
+            ["id", "u128"],
+            ["expiry", "u32"],
+            ["customer", [32]],
+            ["not_before", "u32"],
+            ["created_at", "u32"],
+            ["cash_register_id", "string"],
+          ],
+        },
+      ],
+    ]),
+    OrderEncoderContainer,
+    data
+  );
+  const rawUuid = new BN(deserializedOrder.id).toString("hex");
+  let offset = 0;
+  const uuid = [8, 4, 4, 4, 12]
+    .reduce(
+      (acc, n) => acc.concat(rawUuid.substring(offset, (offset += n))),
+      [] as string[]
+    )
+    .join("-");
+  return {
+    ...deserializedOrder,
+    cashRegisterId: deserializedOrder.cash_register_id,
+    createdAt: deserializedOrder.created_at,
+    notBefore: deserializedOrder.not_before,
+    id: uuid,
+  };
+};
 
 export const enum OrderItemOperation {
   CREDIT_CUSTOMER = 0,

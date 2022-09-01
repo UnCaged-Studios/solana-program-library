@@ -8,7 +8,7 @@ import { sendAndConfirmTx } from "./solana";
 const signOrderPayload = (data: Uint8Array, signer: Keypair) =>
   nacl.sign.detached(data, signer.secretKey);
 
-const aUUID = () =>
+export const aUUID = () =>
   "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (e) => {
     var t = (16 * Math.random()) | 0;
     return ("x" === e ? t : (3 & t) | 8).toString(16);
