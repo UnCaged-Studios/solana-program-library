@@ -1,7 +1,7 @@
 {
   "name": "@uncaged-studios/solana-program-library-sdk",
   "description": "UnCaged Studios Solana Programs Typescript SDKs",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "dist/sdk/ts/index.js",
   "files": [
     "dist/sdk/ts",
@@ -23,7 +23,8 @@
   "homepage": "https://github.com/UnCaged-Studios/solana-program-library#readme",
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check"
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "publish": "rm -rf dist && yarn tsc && npm publish --access public"
   },
   "dependencies": {
     "@solana/spl-token": "^0.2.0",
