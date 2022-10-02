@@ -16,7 +16,7 @@
     "url": "git+https://github.com/UnCaged-Studios/solana-program-library.git"
   },
   "author": "perestom@gmail.com",
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/UnCaged-Studios/solana-program-library/issues"
   },
