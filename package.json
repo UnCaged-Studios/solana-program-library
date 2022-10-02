@@ -22,8 +22,9 @@
   },
   "homepage": "https://github.com/UnCaged-Studios/solana-program-library#readme",
   "scripts": {
-    "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "build": "npm run clean && tsc",
+    "clean": "rm -rf dist",
+    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "release": "release-it"
   },
   "dependencies": {
