@@ -1,6 +1,12 @@
 import { CreateConsumedOrdersAccount } from "./v1/create-consumed-orders-account";
-import { CreateCashRegister } from "./v1/create-cash-register";
-import { CreateTokenCashbox } from "./v1/create-token-cashbox";
+import {
+  CreateCashRegister,
+  findCashRegisterPDA,
+} from "./v1/create-cash-register";
+import {
+  CreateTokenCashbox,
+  findTokenCashboxPDA,
+} from "./v1/create-token-cashbox";
 import { SettleOrderPayment } from "./v1/settle-order-payment";
 import { UpdateOrderSignersWhitelist } from "./v1/update-order-signers-whitelist";
 import { deserializeCashRegisterAccountData } from "./v1/utils";
@@ -25,6 +31,8 @@ export const createOrderSignerSDKv1 = () => orderSignerSDK;
 
 export const utils = {
   deserializeCashRegisterAccountData,
+  findTokenCashboxPDA,
+  findCashRegisterPDA,
 };
 
 export const KachingProgramIDL = IDL_V1;
