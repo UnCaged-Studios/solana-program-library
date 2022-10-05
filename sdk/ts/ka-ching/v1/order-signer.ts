@@ -180,7 +180,7 @@ export const parseOrderFromSettlePaymentTx = (
     OrderEncoderContainer,
     data
   );
-  const rawUuid = new BN(deserializedOrder.id).toString("hex");
+  const rawUuid = new BN(deserializedOrder.id).toString("hex", 2);
   let offset = 0;
   const uuid = [8, 4, 4, 4, 12]
     .reduce(
