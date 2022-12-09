@@ -1,10 +1,10 @@
 # Ka-Ching Cash Register
-![DALL·E 2022-12-09 12 02 41 - a retro cash register with an open cashbox drawer attached to it, on a rustic wood counter, no background, drawn in pencil](https://user-images.githubusercontent.com/2641321/206679823-fde6bc5d-9a07-461c-81e3-23880c182657.png)
 
-> ## ⚠️ Disclaimer
-> The Ka-Ching on-chain program is a work in progress and may contain bugs or other issues. Use of this program is at your own risk and we cannot be held responsible for any damages or losses that may result from its use. Please exercise caution and thoroughly test the program before using it in a production environment.
+> ⚠️ The Ka-Ching on-chain program is a work in progress and may contain bugs or other issues. Use of this program is at your own risk and we cannot be held responsible for any damages or losses that may result from its use. Please exercise caution and thoroughly test the program before using it in a production environment.
 
 ## Overview
+
+<img align="right" width="250" height="250" src="https://user-images.githubusercontent.com/2641321/206679823-fde6bc5d-9a07-461c-81e3-23880c182657.png">
 
 Ka-Ching is a solana program that functions as an on-chain point-of-sale (PoS) system. 
 
