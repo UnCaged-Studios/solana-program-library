@@ -76,3 +76,14 @@ CashRegister->>Customer: ok!
 - The items in the order are iterated over and the appropriate debit or credit operation is performed on the customer's and cashbox's associated token accounts (ATAs).
 - The consumed_orders account is updated to mark the order as consumed.
 - A success result is returned.
+
+### Create Cash Register
+
+The create_cash_register method is used by the cashier (the person or entity operating the point-of-sale (PoS) system) to create a new CashRegister account on the solana blockchain. The CashRegister account is used to manage the state of the PoS system, including the list of order signers who are authorized to sign orders on behalf of the cashier, the list of consumed orders (i.e. orders that have already been settled and cannot be used again), and the consumed orders seed (which is used to generate unique IDs for each order).
+
+To create a new CashRegister account, the create_cash_register method takes the following arguments:
+
+owner: The public key of the account that will own the new CashRegister account.
+consumed_orders: The public key of the account that will be used to store the list of consumed orders for this CashRegister.
+order_signers_whitelist: The public key of the account that will be used to store the list of order signers who are authorized to sign orders on behalf of the cashier.
+Once the new CashRegister account is created, the cashier can use it to manage the PoS system and settle payments made by customers.
