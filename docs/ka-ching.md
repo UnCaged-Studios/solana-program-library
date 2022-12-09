@@ -87,3 +87,14 @@ owner: The public key of the account that will own the new CashRegister account.
 consumed_orders: The public key of the account that will be used to store the list of consumed orders for this CashRegister.
 order_signers_whitelist: The public key of the account that will be used to store the list of order signers who are authorized to sign orders on behalf of the cashier.
 Once the new CashRegister account is created, the cashier can use it to manage the PoS system and settle payments made by customers.
+
+### Create Token Cashobox
+
+The create_token_cashbox method is used by the cashier (the person or entity operating the point-of-sale (PoS) system) to create a new Cashbox account on the solana blockchain. The Cashbox account is used to store the funds received by the PoS system, and to perform debit and credit operations on the associated token accounts (ATAs) of the customers making payments and receiving payments through the PoS system.
+
+To create a new Cashbox account, the create_token_cashbox method takes the following arguments:
+
+token_type: The type of token that will be used in the Cashbox.
+initial_balance: The initial balance of the Cashbox. This is the amount of token that will be deposited in the Cashbox when it is created.
+owner: The public key of the account that will own the new Cashbox account.
+Once the new Cashbox account is created, the cashier can use it to manage the funds received by the PoS system and to perform debit and credit operations on the associated token accounts of the customers. This allows the cashier to track the funds received and spent through the PoS system and to ensure that the correct amounts are credited and debited to the appropriate accounts.
