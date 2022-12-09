@@ -12,7 +12,7 @@ It is designed to perform on-chain settlement of signed orders created off-chain
 
 The program is multi-tenant and each user (referred to as a "Cashier") can create their own accounts and have their users (referred to as "Customers") pay and receive tokens.
 
-It uses a generic order model, where payment is settled based on a signed order payload consisting of an array of items and metadata such as the customer address and expiry.
+It uses a generic order model, where payment is settled based on a signed order payload.
 
 ## Key Features
 
