@@ -77,7 +77,30 @@ CashRegister->>Customer: ok!
 - The consumed_orders account is updated to mark the order as consumed.
 - A success result is returned.
 
-### Create Cash Register
+The settle_order_payment method is used by the customer (the person or entity making a payment through the point-of-sale (PoS) system) to settle a payment on the solana blockchain. This method is called when the customer submits a signed order to the PoS system, and it is used to verify the order and perform the appropriate debit or credit operation on the customer's and cashbox's associated token accounts (ATAs).
+
+To settle a payment, the settle_order_payment method performs the following steps:
+
+It retrieves the public key of the order signer and the signed order payload from the Context object.
+It checks if the public key of the order signer is on the order_signers_whitelist for the CashRegister account. If not, it returns an error.
+It deserializes the signed order payload to extract the details of the order.
+It checks if the cash_register_id in the order matches the cash_register_id provided in the method arguments, and if the customer associated with the order matches the customer account in the Context object. If either check fails, it returns an error.
+It checks if the order has expired or if it is not valid yet based on its expiry and not_before values. If either check fails, it returns an error.
+It checks if the consumed_orders account in the Context object matches the consumed_orders account associated with the CashRegister account. If not, it returns an error.
+It checks if the order has already been consumed by looking up its ID in the consumed_orders account. If the order has already been consumed
+It iterates over the items in the order and performs the appropriate debit or credit operation on the customer's and cashbox's associated token accounts (ATAs).
+It updates the consumed_orders account to mark the order as consumed.
+It returns a success result.
+
+To settle a payment order, the settle_order_payment method takes the following arguments:
+
+cash_register_id: The ID of the CashRegister account associated with the PoS system. This is used to verify that the order is intended for the correct PoS system.
+order_id: The ID of the payment order to be settled.
+signature: The signature of the payment order, signed by the order signer.
+order: The payload of the payment order, containing the details of the payment (e.g. the amount, the type of token, the customer's account, etc.).
+
+
+### `create_cash_register`
 
 The create_cash_register method is used by the cashier (the person or entity operating the point-of-sale (PoS) system) to create a new CashRegister account on the solana blockchain. The CashRegister account is used to manage the state of the PoS system, including the list of order signers who are authorized to sign orders on behalf of the cashier, the list of consumed orders (i.e. orders that have already been settled and cannot be used again), and the consumed orders seed (which is used to generate unique IDs for each order).
 
@@ -88,7 +111,7 @@ consumed_orders: The public key of the account that will be used to store the li
 order_signers_whitelist: The public key of the account that will be used to store the list of order signers who are authorized to sign orders on behalf of the cashier.
 Once the new CashRegister account is created, the cashier can use it to manage the PoS system and settle payments made by customers.
 
-### Create Token Cashobox
+### `create_token_cashbox`
 
 The create_token_cashbox method is used by the cashier (the person or entity operating the point-of-sale (PoS) system) to create a new Cashbox account on the solana blockchain. The Cashbox account is used to store the funds received by the PoS system, and to perform debit and credit operations on the associated token accounts (ATAs) of the customers making payments and receiving payments through the PoS system.
 
@@ -98,3 +121,13 @@ token_type: The type of token that will be used in the Cashbox.
 initial_balance: The initial balance of the Cashbox. This is the amount of token that will be deposited in the Cashbox when it is created.
 owner: The public key of the account that will own the new Cashbox account.
 Once the new Cashbox account is created, the cashier can use it to manage the funds received by the PoS system and to perform debit and credit operations on the associated token accounts of the customers. This allows the cashier to track the funds received and spent through the PoS system and to ensure that the correct amounts are credited and debited to the appropriate accounts.
+
+## `update_order_signers_whitelist` 
+
+The update_order_signers_whitelist method is used by the cashier (the person or entity operating the point-of-sale (PoS) system) to update the list of order signers who are authorized to sign orders on behalf of the cashier. This is an important security measure, as it allows the cashier to control who is able to sign orders and make payments on behalf of the PoS system.
+
+To update the list of order signers, the update_order_signers_whitelist method takes the following arguments:
+
+add: A list of public keys of order signers to be added to the whitelist.
+remove: A list of public keys of order signers to be removed from the whitelist.
+Once the list of order signers has been updated, the cashier can use it to verify that the orders received from customers have been signed by an authorized order signer. This ensures that only valid orders are accepted and processed by the PoS system, and helps to prevent unauthorized or fraudulent payments from being made.
