@@ -1,5 +1,8 @@
 # Ka-Ching Cash Register
 
+> ## ⚠️ Disclaimer
+> The Ka-Ching on-chain program is a work in progress and may contain bugs or other issues. Use of this program is at your own risk and we cannot be held responsible for any damages or losses that may result from its use. Please exercise caution and thoroughly test the program before using it in a production environment.
+
 ## Overview
 
 Ka-Ching is a solana program that functions as an on-chain point-of-sale (PoS) system. 
