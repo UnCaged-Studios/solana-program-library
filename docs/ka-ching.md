@@ -11,16 +11,21 @@ It is designed to perform on-chain settlement of signed orders created off-chain
 
 It uses a generic order model, where payment is settled based on a signed order payload consisting of an array of items and metadata such as the customer address and expiry. 
 
-## Features
+## Key Features
 - Stateless and multi-tenancy: Every user (referred to as a "Cashier") can create their own set of accounts required for operating the PoS and have their users (referred to as "Customers") pay/receive tokens to/from the cashboxes associated with their specific PoS instance (a "Cash Register"). No global state or connection exists between different Cashiers or Customers' data.
 - Generic Order Model: Settling on-chain payment is done based on an ed25519-signed order payload, which consists of an array of items in the format "debit/credit customer with n amount of mint X" and order metadata such as the customer address and expiry. The order is signed off-chain and the signer's public keys have to be pre-configured per Cash Register. Verifying the order payload signature is done on-chain via the Ed25519SigVerify program.
 - Funds Management: A Cashier must create a Cashbox for each mint they want their users to be able to send/receive. The program assumes that the required Customer's associated token accounts already exist. Withdrawing funds from cashboxes to a Cashier's wallet is done by issuing a "credit" order.
 APIs.
-- The program provides different methods for both Cashiers and Customers:
-    - **Cashier**: create_cash_register(), create_token_cashbox(), update_order_signers_whitelist()
-    - **Customer**: settle_order_payment()
 
 ## API
+
+### Overview
+
+In the Ka-Ching on-chain program, there are different methods for the cashier and for the customer. The cashier is the person or entity operating the point-of-sale (PoS) system, while the customer is the person making a payment or receiving a payment through the PoS system.
+
+The cashier methods in the Ka-Ching program include create_cash_register, create_token_cashbox, and update_order_signers_whitelist. These methods allow the cashier to set up and manage the PoS system, including creating a CashRegister account, creating a Cashbox for each type of token that can be used in the system, and updating the list of order signers who are authorized to sign orders on behalf of the cashier.
+
+The customer methods in the Ka-Ching program include settle_order_payment. This method allows the customer to settle a payment by providing a signed order, which includes the details of the payment (e.g. which customer is making the payment, which token is being used, and the amount of the payment). The settle_order_payment method checks the signed order to verify that it is valid and has not been consumed before, and then performs the appropriate debit or credit operation on the customer's and cashbox's associated token accounts.
 
 ### Settle Payment
 
