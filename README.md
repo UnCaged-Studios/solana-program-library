@@ -12,6 +12,43 @@ Ka-Ching Cash Register is an on-chain point-of-sale (PoS) solana program designe
 - Funds Management: A Cashier must create a Cashbox for each mint they want their users to be able to send/receive. The program assumes that the required Customer's associated token accounts already exist. Withdrawing funds from cashboxes to a Cashier's wallet is done by issuing a "credit" order.
 APIs
 
+### Instruction
+
 The program provides different instructions for both Cashiers and Customers:
-- Cashier: create_cash_register(), create_token_cashbox(), update_order_signers_whitelist()
-- Customer: settle_order_payment()
+
+- **Cashier**: create_cash_register(), create_token_cashbox(), update_order_signers_whitelist()
+- **Customer**: settle_order_payment()
+
+### Settle Payment Txn
+
+- The customer sends an instruction to the ed25119Program with a public key, signature, and order.
+- The ed25119Program verifies the signature of the order using the provided public key.
+- The customer sends an instruction to the CashRegister with no data.
+- The CashRegister retrieves the public key and order from the previous instruction to the ed25119Program, and checks if the public key is on the order_signers_whitelist.
+- The CashRegister writes a debit or credit to the Cashbox based on the items in the order.
+- The CashRegister writes the customer's order to the ConsumedOrders and sends a confirmation message to the customer.
+
+```mermaid
+sequenceDiagram
+    actor Customer
+		participant ed25119Program
+		participant CashRegister
+		participant Cashbox
+		participant ConsumedOrders
+		
+Customer->>+ed25119Program: ix[1]
+note right of Customer: pubkey.signature.order
+ed25119Program->>+ed25119Program: verify(signature.order, pubkey)
+Customer->>+CashRegister: ix[2]
+note right of Customer: (empty)
+CashRegister->>+ed25119Program: read ix[1]
+ed25119Program->>+CashRegister: 
+note right of ed25119Program: ix[1].pubkey
+note right of ed25119Program: ix[1].order
+CashRegister->>+CashRegister: order_signers_whitelist.contains(ix[1].pubkey)
+CashRegister->>+Cashbox: write(debit/credit)
+note right of CashRegister: ix[1].order.items[0..n]
+CashRegister->>+ConsumedOrders: write(customer_order[])
+CashRegister->>Customer: ok!
+
+```
