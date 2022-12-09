@@ -4,7 +4,13 @@ All Solana programs (i.e. Smart Contracts) developed by UnCaged Studios, along w
 
 ## Ka-Ching Cash Register
 
-Ka-Ching Cash Register is an on-chain point-of-sale (PoS) solana program designed to perform on-chain settlement of signed orders created off-chain.
+### Overview
+
+Ka-Ching is a solana program that functions as an on-chain point-of-sale (PoS) system. 
+
+It is designed to perform on-chain settlement of signed orders created off-chain. The program allows for stateless and multi-tenant operation, meaning that each user (referred to as a "Cashier") can create their own accounts and have their users (referred to as "Customers") pay and receive tokens to and from associated cashboxes. 
+
+It uses a generic order model, where payment is settled based on a signed order payload consisting of an array of items and metadata such as the customer address and expiry. 
 
 ### Features
 - Stateless and multi-tenancy: Every user (referred to as a "Cashier") can create their own set of accounts required for operating the PoS and have their users (referred to as "Customers") pay/receive tokens to/from the cashboxes associated with their specific PoS instance (a "Cash Register"). No global state or connection exists between different Cashiers or Customers' data.
