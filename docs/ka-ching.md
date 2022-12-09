@@ -36,31 +36,6 @@ In the Ka-Ching on-chain program, there are different methods for the cashier an
 
 Used by the customer to settle a payment on-chain. This method is called when the customer submits a signed order to the PoS system, and it is used to verify the order and perform the appropriate debit or credit operation on the customer's and cashbox's associated token accounts (ATAs).
 
-```mermaid
-sequenceDiagram
-    actor Customer
-		participant ed25119Program
-		participant CashRegister
-		participant Cashbox
-		participant ConsumedOrders
-
-Customer->>+ed25119Program: ix[1]
-note right of Customer: pubkey.signature.order
-ed25119Program->>+ed25119Program: verify(signature.order, pubkey)
-Customer->>+CashRegister: ix[2]
-note right of Customer: (empty)
-CashRegister->>+ed25119Program: read ix[1]
-ed25119Program->>+CashRegister:
-note right of ed25119Program: ix[1].pubkey
-note right of ed25119Program: ix[1].order
-CashRegister->>+CashRegister: order_signers_whitelist.contains(ix[1].pubkey)
-CashRegister->>+Cashbox: write(debit/credit)
-note right of CashRegister: ix[1].order.items[0..n]
-CashRegister->>+ConsumedOrders: write(customer_order[])
-CashRegister->>Customer: ok!
-
-```
-
 To settle a payment, the settle_order_payment method performs the following steps:
 
 - It relies on previous successful ed25119Program instruction and extract from it the order signer public key.
@@ -71,6 +46,30 @@ To settle a payment, the settle_order_payment method performs the following step
 - It iterates over the items in the order and performs the appropriate debit or credit operation on the customer's and cashbox's associated token accounts (ATAs).
 - It updates the consumed_orders account to mark the order as consumed.
 - It returns a success result.
+
+```mermaid
+sequenceDiagram
+    actor Customer
+		participant ed25119Program
+		participant CashRegister
+		participant Cashbox
+		participant ConsumedOrders
+Customer->>+ed25119Program: ix[1]
+note right of Customer: pubkey.signature.order
+ed25119Program->>+ed25119Program: verify(signature.order, pubkey)
+Customer->>+CashRegister: ix[2]
+note right of Customer: (empty)
+CashRegister->>+ed25119Program: read ix[1]
+ed25119Program->>+CashRegister: 
+note right of ed25119Program: ix[1].pubkey
+note right of ed25119Program: ix[1].order
+CashRegister->>+CashRegister: order_signers_whitelist.contains(ix[1].pubkey)
+CashRegister->>+Cashbox: write(debit/credit)
+note right of CashRegister: ix[1].order.items[0..n]
+CashRegister->>+ConsumedOrders: write(customer_order[])
+CashRegister->>Customer: ok!
+
+```
 
 ### `create_cash_register`
 
