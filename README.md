@@ -1,10 +1,6 @@
-# UnCaged Studios - Solana Program Library
+# Ka-Ching Cash Register
 
-All Solana programs (i.e. Smart Contracts) developed by UnCaged Studios, along with their typescript SDK.
-
-## Ka-Ching Cash Register
-
-### Overview
+## Overview
 
 Ka-Ching is a solana program that functions as an on-chain point-of-sale (PoS) system. 
 
@@ -12,20 +8,34 @@ It is designed to perform on-chain settlement of signed orders created off-chain
 
 It uses a generic order model, where payment is settled based on a signed order payload consisting of an array of items and metadata such as the customer address and expiry. 
 
-### Features
+## Features
 - Stateless and multi-tenancy: Every user (referred to as a "Cashier") can create their own set of accounts required for operating the PoS and have their users (referred to as "Customers") pay/receive tokens to/from the cashboxes associated with their specific PoS instance (a "Cash Register"). No global state or connection exists between different Cashiers or Customers' data.
 - Generic Order Model: Settling on-chain payment is done based on an ed25519-signed order payload, which consists of an array of items in the format "debit/credit customer with n amount of mint X" and order metadata such as the customer address and expiry. The order is signed off-chain and the signer's public keys have to be pre-configured per Cash Register. Verifying the order payload signature is done on-chain via the Ed25519SigVerify program.
 - Funds Management: A Cashier must create a Cashbox for each mint they want their users to be able to send/receive. The program assumes that the required Customer's associated token accounts already exist. Withdrawing funds from cashboxes to a Cashier's wallet is done by issuing a "credit" order.
-APIs
+APIs.
+- The program provides different methods for both Cashiers and Customers:
+    - **Cashier**: create_cash_register(), create_token_cashbox(), update_order_signers_whitelist()
+    - **Customer**: settle_order_payment()
 
-### Instruction
+## API
 
-The program provides different instructions for both Cashiers and Customers:
+### Settle Payment
 
-- **Cashier**: create_cash_register(), create_token_cashbox(), update_order_signers_whitelist()
-- **Customer**: settle_order_payment()
+#### Code
+src
 
-### Settle Payment Txn
+- It retrieves the public key of the order signer and the signed order payload from the Context object.
+- It checks if the public key of the order signer is on the order_signers_whitelist for the CashRegister account. If not, it returns an error.
+- It deserializes the signed order payload to extract the details of the order.
+- It checks if the cash_register_id in the order matches the cash_register_id provided in the method arguments, and if the customer associated with the order matches the customer account in the Context object. If either check fails, it returns an error.
+- It checks if the order has expired or if it is not valid yet based on its expiry and not_before values. If either check fails, it returns an error.
+- It checks if the consumed_orders account in the Context object matches the consumed_orders account associated with the CashRegister account. If not, it returns an error.
+- It checks if the order has already been consumed by looking up its ID in the consumed_orders account. If the order has already been consumed, it returns an error.
+- It iterates over the items in the order and performs the appropriate debit or credit operation on the customer's and cashbox's associated token accounts (ATAs).
+- It updates the consumed_orders account to mark the order as consumed.
+- It returns a success result.
+
+#### Sequence Diagram
 
 - The customer sends an instruction to the ed25119Program with a public key, signature, and order.
 - The ed25119Program verifies the signature of the order using the provided public key.
