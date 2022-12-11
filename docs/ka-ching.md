@@ -1,4 +1,4 @@
-<img align="center" width="100%" src="https://user-images.githubusercontent.com/2641321/206679823-fde6bc5d-9a07-461c-81e3-23880c182657.png">
+<img align="center" width="100%" src="https://user-images.githubusercontent.com/2641321/206889581-e84fce1d-0681-41fc-bc87-522ef5a3a49b.png" alt="DALL-E | different types of retro cash registers, horizontal, white background pixel art">
 
 # Ka-Ching Cash Register
 
@@ -28,9 +28,11 @@ It uses a generic order model, where payment is settled based on a signed order 
 
 In the Ka-Ching on-chain program, there are different methods for the cashier and for the customer.
 
-**Customer is the person making a payment or receiving a payment through the PoS system**: The customer method allows the customer to settle a payment by providing a signed order, which includes the details of the payment (e.g. which customer is making the payment, which token is being used, and the amount of the payment).
+#### Customer is the person making a payment or receiving a payment through the PoS system
+The customer method allows to settle a payment by providing a signed order, which includes the details of the payment (e.g. which customer is making the payment, which token is being used, and the amount of the payment).
 
-**Cashier is the person or entity operating the point-of-sale (PoS) system**: Its methods allow the cashier to set up and manage the PoS system, including creating a CashRegister account, creating a Cashbox for each type of token that can be used in the system, and updating the list of order signers who are authorized to sign orders on behalf of the cashier
+#### Cashier is the person or entity operating the PoS System
+The Cashier methods allow to set up and manage the PoS system, including creating a CashRegister account, creating a Cashbox for each type of token that can be used in the system, and updating the list of order signers who are authorized to sign orders on behalf of the cashier
 
 ### `settle_order_payment`
 
