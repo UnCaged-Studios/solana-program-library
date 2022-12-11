@@ -6,26 +6,22 @@
 
 ## Overview
 
-Ka-Ching is a solana program that functions as an on-chain point-of-sale (PoS) system.
+Ka-Ching is a solana program that functions as an on-chain point-of-sale (PoS) system. It is designed to perform on-chain settlement of signed orders created off-chain.
 
-It is designed to perform on-chain settlement of signed orders created off-chain.
+### 👩‍ 👨 Multi-tenancy
 
-The program is multi-tenant and each user (referred to as a "Cashier") can create their own accounts and have their users (referred to as "Customers") pay and receive tokens.
+Every user (referred to as a "Cashier") can create their own set of accounts required for operating the PoS and have their users (referred to as "Customers") pay/receive tokens to/from the cashboxes associated with their specific PoS instance (a "Cash Register")
 
-It uses a generic order model, where payment is settled based on a signed order payload.
+### 🗒️ Generic Off-Chain Order
 
-## Key Features
+Settling on-chain payment is done based on an ed25519-signed order payload, which is signed off-chain. This allows greater security and control over the payment process, as the Cashier can dynamically ensure that only authorized signers are able to create valid orders, without deploying any additional code on-chain or creating costly accounts. Additionally, signing the order off-chain allows for more flexibility implementing advanced payment scenarios, as the order can be created and signed in any environment that supports signing, rather than being limited to the on-chain environment.
 
-- **Stateless and multi-tenant**: Every user (referred to as a "Cashier") can create their own set of accounts required for operating the PoS and have their users (referred to as "Customers") pay/receive tokens to/from the cashboxes associated with their specific PoS instance (a "Cash Register").
-- **Generic Order Model**:
-  - Settling on-chain payment is done based on an ed25519-signed order payload, which consists of an array of items in the format "debit/credit customer with `n` amount of mint `xyz`" and order metadata such as the customer address and expiry.
-  - The order is signed off-chain and the signer's public keys have to be pre-configured per Cash Register. Verifying the order payload signature is done on-chain via the Ed25519SigVerify program.
-- **Funds Management**: A Cashier must create a Cashbox for each mint they want their users to be able to send/receive. The program assumes that the required Customer's associated token accounts already exist. Withdrawing funds from cashboxes to a Cashier's wallet is done by issuing a "credit" order.
+### 🏦 Funds Management
+
+A Cashier must create a Cashbox for each mint they want their users to be able to send/receive. The program assumes that the required Customer's associated token accounts already exist. Withdrawing funds from cashboxes to a Cashier's wallet is done by issuing a "credit" order.
+
 
 ## API
-
-### Overview
-
 In the Ka-Ching on-chain program, there are different methods for the cashier and for the customer.
 
 #### Customer is the person making a payment or receiving a payment through the PoS system
