@@ -64,9 +64,6 @@ const serializeOrderItems = (items: OrderModel["items"]) => {
     }, bufferLayout);
 };
 
-const encodeUUID = (str: string) =>
-  Uint8Array.from(Buffer.from(str.replace(/-/g, ""), "hex"));
-
 // debit customer with 𝑛1 amount of mint X.
 type OrderItemModel = {
   amount: number;
@@ -104,7 +101,7 @@ export const serializeOrder = (order: OrderModel) =>
       ],
     ]),
     new OrderEncoderContainer({
-      id: encodeUUID(order.id),
+      id: Uint8Array.from(Buffer.from(order.id, "hex")),
       expiry: order.expiry,
       customer: order.customer.toBytes(),
       not_before: order.notBefore,
@@ -150,7 +147,7 @@ const getSigverifyIx = (tx: ParsedTransactionWithMeta) => {
   }
   const sigverify_ix = tx.transaction.message.instructions.at(0);
   if (sigverify_ix && "data" in sigverify_ix && sigverify_ix.data) {
-    return sigverify_ix;
+    return sigverify_ix.data;
   }
   throw new Error(`sigverify_ix is undefined or has no data field`);
 };
@@ -158,8 +155,8 @@ const getSigverifyIx = (tx: ParsedTransactionWithMeta) => {
 export const parseOrderFromSettlePaymentTx = (
   tx: ParsedTransactionWithMeta
 ): ParsedOrder => {
-  const sigverify_ix = getSigverifyIx(tx);
-  const data = Buffer.from(base58.decode(sigverify_ix.data)).subarray(112);
+  const sigverify_ix_data = getSigverifyIx(tx);
+  const data = Buffer.from(base58.decode(sigverify_ix_data)).subarray(112);
   const deserializedOrder = borsh.deserializeUnchecked(
     new Map([
       [
@@ -180,20 +177,16 @@ export const parseOrderFromSettlePaymentTx = (
     OrderEncoderContainer,
     data
   );
-  const rawUuid = new BN(deserializedOrder.id).toString("hex", 2);
-  let offset = 0;
-  const uuid = [8, 4, 4, 4, 12]
-    .reduce(
-      (acc, n) => acc.concat(rawUuid.substring(offset, (offset += n))),
-      [] as string[]
-    )
-    .join("-");
+  const id = (deserializedOrder.id as unknown as BN)
+    .toBuffer(undefined, 16)
+    .toString("hex");
   return {
-    ...deserializedOrder,
+    id,
     cashRegisterId: deserializedOrder.cash_register_id,
     createdAt: deserializedOrder.created_at,
     notBefore: deserializedOrder.not_before,
-    id: uuid,
+    expiry: deserializedOrder.expiry,
+    customer: deserializedOrder.customer,
   };
 };
 
