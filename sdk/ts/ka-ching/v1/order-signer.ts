@@ -69,6 +69,7 @@ type OrderItemModel = {
   amount: number;
   currency: PublicKey;
   op: OrderItemOperation;
+  shouldCreateAta?: boolean;
 };
 
 export type OrderModel = {

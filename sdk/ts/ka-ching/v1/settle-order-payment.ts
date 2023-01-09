@@ -4,7 +4,10 @@ import {
   SYSVAR_INSTRUCTIONS_PUBKEY,
   ComputeBudgetProgram,
 } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import {
+  createAssociatedTokenAccountInstruction,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
 import { OrderModel } from "./order-signer";
 import { IProgramAPI } from "./program";
 import { findTokenCashboxPDA } from "./create-token-cashbox";
@@ -86,6 +89,23 @@ export class SettleOrderPayment {
           })
         : undefined;
 
+    const createTokenAccounts = await Promise.all(
+      orderItems
+        .filter((itm) => itm.shouldCreateAta)
+        .map(async (itm) => {
+          const [ata] = await findAssociatedTokenAddress(
+            customer,
+            itm.currency
+          );
+          return createAssociatedTokenAccountInstruction(
+            customer,
+            ata,
+            customer,
+            itm.currency
+          );
+        })
+    );
+
     return this.programAPI
       .settleOrderPayment({
         cashRegisterId,
@@ -97,7 +117,11 @@ export class SettleOrderPayment {
         consumedOrders,
       })
       .remainingAccounts(orderItemsAccounts)
-      .preInstructions([ixEd25519Program, computeBudgetIx!].filter(Boolean))
+      .preInstructions(
+        [ixEd25519Program, computeBudgetIx!, ...createTokenAccounts].filter(
+          Boolean
+        )
+      )
       .transaction();
   }
 }
