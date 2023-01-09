@@ -1,7 +1,7 @@
 {
   "name": "@uncaged-studios/solana-program-library-sdk",
   "description": "UnCaged Studios Solana Programs Typescript SDKs",
-  "version": "0.0.13",
+  "version": "0.1.0",
   "main": "dist/sdk/ts/index.js",
   "files": [
     "dist/sdk/ts",
