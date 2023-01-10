@@ -7,7 +7,10 @@ import {
   CreateTokenCashbox,
   findTokenCashboxPDA,
 } from "./v1/create-token-cashbox";
-import { SettleOrderPayment } from "./v1/settle-order-payment";
+import {
+  SettleOrderPayment,
+  findAssociatedTokenAddress,
+} from "./v1/settle-order-payment";
 import { UpdateOrderSignersWhitelist } from "./v1/update-order-signers-whitelist";
 import { deserializeCashRegisterAccountData } from "./v1/utils";
 
@@ -33,6 +36,7 @@ export const utils = {
   deserializeCashRegisterAccountData,
   findTokenCashboxPDA,
   findCashRegisterPDA,
+  findAssociatedTokenAddress,
 };
 
 export const KachingProgramIDL = IDL_V1;
