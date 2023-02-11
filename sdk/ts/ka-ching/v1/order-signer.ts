@@ -125,25 +125,12 @@ const getSigverifyIx = (tx: ParsedTransactionWithMeta) => {
   if (!tx.meta || tx.meta.err != null || tx.meta.err != undefined) {
     throw new Error(`transaction meta.err object is invalid: ${tx.meta?.err}`);
   }
-  if (tx.transaction.message.instructions.length !== 2) {
-    throw new Error(
-      `transaction message.instructions length is invalid ${tx.transaction.message.instructions.length}`
-    );
-  }
   if (
     tx.transaction.message.instructions.at(0)?.programId.toBase58() !==
     "Ed25519SigVerify111111111111111111111111111"
   ) {
     throw new Error(
       `tx.transaction.message.instructions.at(0) is not Ed25519SigVerify111111111111111111111111111`
-    );
-  }
-  if (
-    tx.transaction.message.instructions.at(1)?.programId.toBase58() !==
-    PROGRAM_ID.toBase58()
-  ) {
-    throw new Error(
-      `tx.transaction.message.instructions.at(1) is not ${PROGRAM_ID.toBase58()}`
     );
   }
   const sigverify_ix = tx.transaction.message.instructions.at(0);
