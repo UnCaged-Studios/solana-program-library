@@ -1,4 +1,3 @@
-import _ from "lodash";
 import { PublicKey, ParsedTransactionWithMeta } from "@solana/web3.js";
 import { parseOrderFromSettlePaymentTx } from "../../sdk/ts/ka-ching/v1/order-signer";
 
