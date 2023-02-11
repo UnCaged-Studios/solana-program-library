@@ -24,7 +24,7 @@
   "scripts": {
     "build": "npm run clean && tsc",
     "clean": "rm -rf dist",
-    "lint": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
+    "lint": "prettier \"*/**/*{.js,.ts}\" -w",
     "release": "release-it"
   },
   "dependencies": {
